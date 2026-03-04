@@ -6,8 +6,8 @@ const CardNetworkLogo = ({ network }) => {
   switch (network?.toLowerCase()) {
     case 'visa':
       return (
-        <svg viewBox="0 0 48 48" className="h-8 w-auto fill-white opacity-90" xmlns="http://www.w3.org/2000/svg">
-          <path d="M18.814 31.432l2.946-11.898h4.717l-2.946 11.898h-4.717zm18.332-11.536c-.902-.346-2.316-.714-4.062-.714-4.462 0-7.608 2.375-7.632 5.782-.027 2.51 2.247 3.908 3.96 4.745 1.758.857 2.348 1.406 2.339 2.172-.016 1.173-1.407 1.71-2.706 1.71-1.812 0-2.783-.274-4.26-.921l-.598-.283-.637 3.961c1.07.493 3.051.921 5.106.941 4.747 0 7.84-2.348 7.873-5.979.023-1.993-1.188-3.511-3.791-4.762-1.578-.802-2.548-1.338-2.541-2.152.004-.741.824-1.5 2.611-1.5 1.48-.027 2.559.32 3.398.683l.406.19.637-3.882zm9.14 11.536L42.66 19.534h-3.64c-.84 0-1.468.243-1.824 1.096l-6.443 15.394 4.954.004.986-2.723h6.05l.571 2.719 4.372.008zm-5.711-6.603l-1.91 5.253h3.535l-1.625-5.253zM13.793 19.534H7.662C6.91 19.534 6.305 19.963 6 20.598l-7.058 16.784 4.954.004L4.882 34.4h6.055l.572 2.723h4.372l-2.088-17.591z"/>
+        <svg viewBox="0 0 100 32" className="h-6 w-auto" xmlns="http://www.w3.org/2000/svg">
+          <path d="M37.1 3.2l-3.3 22.3h-5.2l3.3-22.3h5.2zm21.6 0l-4.1 14.2-.2-1.1c-.7-3.4-3.8-13.1-3.8-13.1h-5.4l-.1.4c0 0 10.6 25.4 11.2 25.4h5.4l8.1-25.8h-11.1zm22.5 0c-1.1 0-2 .7-2.4 1.7l-8.4 20.6h5.4l1.1-3.1h6.6l.6 3.1h4.8l-4.2-22.3h-3.5zm-2.1 14.8l2.5-7.1 1.4 7.1h-3.9zm-63.8-14.8l-5.1 14.8-.5-2.7c-.9-4.7-4.8-12.1-4.8-12.1H0l.1.5c4.1 1 8.6 5.6 11.4 11l6.1 16.2h5.5l9.2-25.4h-6.8z" fill="white" />
         </svg>
       );
     case 'mastercard':
@@ -26,9 +26,10 @@ const CardNetworkLogo = ({ network }) => {
       );
     case 'rupay':
       return (
-        <div className="flex flex-col items-center">
-          <span className="italic font-black text-white text-lg leading-none tracking-tighter">RuPay<span className="text-orange-400">❯</span></span>
-        </div>
+        <svg viewBox="0 0 120 40" className="h-7 w-auto" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12.5 5.5l-4.2 24.3h7.1l1.5-8.5h4.1c4.5 0 7.2-2.3 8.1-7.2.9-4.9-1.2-8.6-6.1-8.6h-10.5zm7.3 6.8h2.6c1.8 0 2.5.7 2.2 2.5-.3 1.8-1.2 2.5-3 2.5h-2.6l.8-5zm22.4-6.8l-4.2 24.3h7.1l1.1-6.4c1.1 1 2.9 1.5 4.8 1.5 6.2 0 10.1-4.7 11.2-11.2 1.1-6.5-2.2-11.2-8.4-11.2-2.1 0-3.9.7-5 2l.6-3h-7.2zm11.2 12.2c-.5 3.1-2.4 5.3-5.2 5.3-2.1 0-3.2-1.3-2.7-4 .5-3.1 2.4-5.3 5.3-5.3 2 0 3.2 1.3 2.6 4zm16.5-20.1l-6.4 36.9h8.3l1.8-10.5h10.4l-1.8 10.5h8.3l6.4-36.9h-8.3l-1.8 10.5H68.1l1.8-10.5h-8.3zm38.2 10.4l-3.3 4.2h3.5l-1.5 8.5h-3.5l-2.4 3.1h-4.4l2.4-3.1h-1.5l-3.3 4.2h-4.4l11-13.9 1.5-8.5 4.2-5.4h4.4l-4.2 5.4h1.5l3.3-4.2h4.4z" fill="white"/>
+          <path d="M112 5.5l-8 10h5l3-10h-0z" fill="#ff9933"/>
+        </svg>
       );
     default:
       return null;
@@ -37,15 +38,15 @@ const CardNetworkLogo = ({ network }) => {
 
 // Hardcoded configurations based on user portfolio
 const PORTFOLIO = [
-  { id: 'amex', name: 'Amex Blue', bank: 'American Express', last4: '2000', limit: 370000, stmtDate: 2, dueDate: 20, feeTarget: 40000, bg: 'bg-gradient-to-br from-blue-600 to-blue-900', image: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=600', network: 'amex' },
-  { id: 'millennia', name: 'HDFC Millennia', bank: 'HDFC Bank', last4: '1697', limit: 231000, stmtDate: 6, dueDate: 26, bg: 'bg-gradient-to-br from-indigo-800 to-blue-900', image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=600', network: 'visa' },
-  { id: 'swiggy', name: 'HDFC Swiggy', bank: 'HDFC Bank', last4: '2569', limit: 185000, stmtDate: 6, dueDate: 26, bg: 'bg-gradient-to-br from-orange-500 to-red-600', image: 'https://images.unsplash.com/photo-1557682250-33bd709cbe85?auto=format&fit=crop&q=80&w=600', network: 'mastercard' },
-  { id: 'amazon', name: 'Amazon Pay', bank: 'ICICI Bank', last4: '2002', limit: 330000, stmtDate: 12, dueDate: 30, bg: 'bg-gradient-to-br from-amber-500 to-orange-700', image: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&q=80&w=600', network: 'visa' },
-  { id: 'airtel', name: 'Airtel Axis', bank: 'Axis Bank', last4: '8559', limit: 185000, stmtDate: 12, dueDate: 2, feeTarget: 200000, bg: 'bg-gradient-to-br from-red-600 to-red-900', image: 'https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?auto=format&fit=crop&q=80&w=600', network: 'mastercard' },
-  { id: 'onecard', name: 'OneCard BOB', bank: 'BOB', last4: '8697', limit: 300000, stmtDate: 18, dueDate: 4, bg: 'bg-gradient-to-br from-gray-800 to-black', image: 'https://images.unsplash.com/photo-1600607688969-a5bfcd64bd40?auto=format&fit=crop&q=80&w=600', network: 'visa' },
-  { id: 'mojo', name: 'Kotak Mojo', bank: 'Kotak Bank', last4: '8222', limit: 488000, stmtDate: 20, dueDate: 6, bg: 'bg-gradient-to-br from-red-700 to-rose-900', image: 'https://images.unsplash.com/photo-1557682224-5b8590cd9ec5?auto=format&fit=crop&q=80&w=600', network: 'visa' },
-  { id: 'tiger', name: 'IndusInd Tiger', bank: 'IndusInd Bank', last4: '6688', limit: 200000, stmtDate: 23, dueDate: 11, bg: 'bg-gradient-to-br from-yellow-700 to-amber-900', image: 'https://images.unsplash.com/photo-1557682260-96773eb01377?auto=format&fit=crop&q=80&w=600', network: 'visa' },
-  { id: 'ixigo', name: 'AU ixigo', bank: 'AU Small Finance', last4: '1309', limit: 70000, stmtDate: 24, dueDate: 12, bg: 'bg-gradient-to-br from-purple-600 to-purple-900', image: 'https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&q=80&w=600', network: 'visa' }
+  { id: 'amex', name: 'Amex Blue', bank: 'American Express', last4: '2000', limit: 370000, stmtDate: 2, dueDate: 20, feeTarget: 40000, bg: 'bg-gradient-to-br from-blue-600 to-blue-900', image: 'https://images.unsplash.com/photo-1614850523296-d8c1af93d400?auto=format&fit=crop&q=80&w=600', network: 'amex' },
+  { id: 'millennia', name: 'HDFC Millennia', bank: 'HDFC Bank', last4: '1697', limit: 231000, stmtDate: 6, dueDate: 26, bg: 'bg-gradient-to-br from-indigo-800 to-blue-900', image: 'https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?auto=format&fit=crop&q=80&w=600', network: 'visa' },
+  { id: 'swiggy', name: 'HDFC Swiggy', bank: 'HDFC Bank', last4: '2569', limit: 185000, stmtDate: 6, dueDate: 26, bg: 'bg-gradient-to-br from-orange-500 to-red-600', image: 'https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?auto=format&fit=crop&q=80&w=600', network: 'mastercard' },
+  { id: 'amazon', name: 'Amazon Pay', bank: 'ICICI Bank', last4: '2002', limit: 330000, stmtDate: 12, dueDate: 30, bg: 'bg-gradient-to-br from-amber-500 to-orange-700', image: 'https://images.unsplash.com/photo-1614850523060-8da1d56ae167?auto=format&fit=crop&q=80&w=600', network: 'visa' },
+  { id: 'airtel', name: 'Airtel Axis', bank: 'Axis Bank', last4: '8559', limit: 185000, stmtDate: 12, dueDate: 2, feeTarget: 200000, bg: 'bg-gradient-to-br from-red-600 to-red-900', image: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=600', network: 'rupay' },
+  { id: 'onecard', name: 'OneCard BOB', bank: 'BOB', last4: '8697', limit: 300000, stmtDate: 18, dueDate: 4, bg: 'bg-gradient-to-br from-gray-800 to-black', image: 'https://images.unsplash.com/photo-1550684376-efcbd6e3f031?auto=format&fit=crop&q=80&w=600', network: 'visa' },
+  { id: 'mojo', name: 'Kotak Mojo', bank: 'Kotak Bank', last4: '8222', limit: 488000, stmtDate: 20, dueDate: 6, bg: 'bg-gradient-to-br from-red-700 to-rose-900', image: 'https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&q=80&w=600', network: 'visa' },
+  { id: 'tiger', name: 'IndusInd Tiger', bank: 'IndusInd Bank', last4: '6688', limit: 200000, stmtDate: 23, dueDate: 11, bg: 'bg-gradient-to-br from-yellow-700 to-amber-900', image: 'https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&q=80&w=600', network: 'visa' },
+  { id: 'ixigo', name: 'AU ixigo', bank: 'AU Small Finance', last4: '1309', limit: 70000, stmtDate: 24, dueDate: 12, bg: 'bg-gradient-to-br from-purple-600 to-purple-900', image: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&q=80&w=600', network: 'visa' }
 ];
 
 const formatInr = (amount) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
