@@ -14,7 +14,7 @@ const PREMIUM_GRADIENTS = [
   'bg-gradient-to-br from-purple-700 via-indigo-950 to-black'
 ];
 
-// Network Logo Component with /assets/ PNG support
+// Network Logo Component with /assets/ support & clean fallbacks
 const CardNetworkLogo = ({ network }) => {
   const [imgError, setImgError] = useState(false);
   const networkName = network?.toLowerCase();
@@ -32,7 +32,7 @@ const CardNetworkLogo = ({ network }) => {
 
   switch (networkName) {
     case 'visa':
-      return <div className="text-white italic font-black text-xl tracking-tighter drop-shadow-lg">VISA</div>;
+      return <div className="text-white italic font-black text-xl tracking-tighter drop-shadow-lg leading-none">VISA</div>;
     case 'mastercard':
       return (
         <svg viewBox="0 0 24 24" className="h-8 w-auto drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
@@ -44,16 +44,23 @@ const CardNetworkLogo = ({ network }) => {
     case 'amex':
       return <div className="bg-[#016fcf] px-2 py-0.5 rounded border border-white/30 shadow-lg text-[10px] font-black tracking-tighter text-white uppercase italic">AMEX</div>;
     case 'rupay':
-      return <div className="text-white font-black italic text-lg drop-shadow-lg">RuPay<span className="text-orange-500 font-bold not-italic">❯</span></div>;
+      return <div className="text-white font-black italic text-lg drop-shadow-lg leading-none">RuPay<span className="text-orange-500 font-bold not-italic">❯</span></div>;
     default:
       return <CardIcon className="text-white/40" size={20} />;
   }
 };
 
+// FULLY RESTORED: Your default 9 cards
 const INITIAL_PORTFOLIO = [
   { id: 'amex', name: 'Amex Blue', bank: 'American Express', last4: '2000', limit: 370000, stmtDate: 2, dueDate: 20, bg: PREMIUM_GRADIENTS[0], image: 'https://images.unsplash.com/photo-1639322537228-f710d846310a?q=80&w=600&auto=format', network: 'amex' },
   { id: 'millennia', name: 'HDFC Millennia', bank: 'HDFC Bank', last4: '1697', limit: 231000, stmtDate: 6, dueDate: 26, bg: PREMIUM_GRADIENTS[1], image: 'https://images.unsplash.com/photo-1639322537504-6427a16b0a28?q=80&w=600&auto=format', network: 'visa' },
-  { id: 'airtel', name: 'Airtel Axis', bank: 'Axis Bank', last4: '8559', limit: 185000, stmtDate: 12, dueDate: 2, bg: PREMIUM_GRADIENTS[4], image: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=600&auto=format', network: 'rupay' }
+  { id: 'swiggy', name: 'HDFC Swiggy', bank: 'HDFC Bank', last4: '2569', limit: 185000, stmtDate: 6, dueDate: 26, bg: PREMIUM_GRADIENTS[2], image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&auto=format', network: 'mastercard' },
+  { id: 'amazon', name: 'Amazon Pay', bank: 'ICICI Bank', last4: '2002', limit: 330000, stmtDate: 12, dueDate: 30, bg: PREMIUM_GRADIENTS[3], image: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=600&auto=format', network: 'visa' },
+  { id: 'airtel', name: 'Airtel Axis', bank: 'Axis Bank', last4: '8559', limit: 185000, stmtDate: 12, dueDate: 2, bg: PREMIUM_GRADIENTS[4], image: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=600&auto=format', network: 'rupay' },
+  { id: 'onecard', name: 'OneCard BOB', bank: 'BOB', last4: '8697', limit: 300000, stmtDate: 18, dueDate: 4, bg: PREMIUM_GRADIENTS[5], image: 'https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=600&auto=format', network: 'visa' },
+  { id: 'mojo', name: 'Kotak Mojo', bank: 'Kotak Bank', last4: '8222', limit: 488000, stmtDate: 20, dueDate: 6, bg: PREMIUM_GRADIENTS[6], image: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=600&auto=format', network: 'visa' },
+  { id: 'tiger', name: 'IndusInd Tiger', bank: 'IndusInd Bank', last4: '6688', limit: 200000, stmtDate: 23, dueDate: 11, bg: PREMIUM_GRADIENTS[7], image: 'https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=600&auto=format', network: 'visa' },
+  { id: 'ixigo', name: 'AU ixigo', bank: 'AU Small Finance', last4: '1309', limit: 70000, stmtDate: 24, dueDate: 12, bg: PREMIUM_GRADIENTS[8], image: 'https://images.unsplash.com/photo-1557682250-33bd709cbe85?q=80&w=600&auto=format', network: 'visa' }
 ];
 
 const formatInr = (amount) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
@@ -94,8 +101,7 @@ export default function App() {
   const [editingCard, setEditingCard] = useState(null);
   const [editForm, setEditForm] = useState({ name: '', bank: '', last4: '', limit: 0, balance: 0, emis: [], network: 'visa', stmtDate: 1, dueDate: 15 });
   
-  // Sort State
-  const [sortMode, setSortMode] = useState('custom'); // 'alphabetical', 'usage', 'custom'
+  const [sortMode, setSortMode] = useState('custom');
   const [draggedIdx, setDraggedIdx] = useState(null);
 
   const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSZk7SCZwdrwokpnjoBREXLwxj3rYUv6mAz-4IJiZhqn7DFDIdftERkfptW1tbkqzy/exec";
@@ -123,7 +129,11 @@ export default function App() {
       try {
         const response = await fetch(GOOGLE_APPS_SCRIPT_URL);
         const data = await response.json();
-        if (data.settings?.GLOBAL_PORTFOLIO) setPortfolio(JSON.parse(data.settings.GLOBAL_PORTFOLIO.portfolio));
+        
+        if (data.settings?.GLOBAL_PORTFOLIO) {
+          setPortfolio(JSON.parse(data.settings.GLOBAL_PORTFOLIO.portfolio));
+        }
+
         const processedSettings = {};
         Object.entries(data.settings || {}).forEach(([card, val]) => {
             if (card === 'GLOBAL_PORTFOLIO') return;
@@ -134,12 +144,14 @@ export default function App() {
             };
         });
         setCustomConfig(processedSettings);
+
         const currentSpends = {};
         data.transactions?.forEach((row) => {
           const cardNum = String(row.card);
           const amount = Number(row.amount);
           const txDate = new Date(row.date);
-          const cardInfo = (data.settings?.GLOBAL_PORTFOLIO ? JSON.parse(data.settings.GLOBAL_PORTFOLIO.portfolio) : portfolio).find(c => c.last4 === cardNum);
+          const p = data.settings?.GLOBAL_PORTFOLIO ? JSON.parse(data.settings.GLOBAL_PORTFOLIO.portfolio) : INITIAL_PORTFOLIO;
+          const cardInfo = p.find(c => c.last4 === cardNum);
           if (cardInfo) {
             const lastStmt = getLastStatementDate(cardInfo.stmtDate);
             if (txDate >= lastStmt) currentSpends[cardNum] = (currentSpends[cardNum] || 0) + amount;
@@ -153,39 +165,24 @@ export default function App() {
     fetchLiveData();
   }, [isAuthenticated]);
 
-  // Derived sorted portfolio
   const displayPortfolio = useMemo(() => {
     let sorted = [...portfolio];
-    if (sortMode === 'alphabetical') {
-      sorted.sort((a, b) => a.name.localeCompare(b.name));
-    } else if (sortMode === 'usage') {
-      sorted.sort((a, b) => (cardSpends[b.last4] || 0) - (cardSpends[a.last4] || 0));
-    }
+    if (sortMode === 'alphabetical') sorted.sort((a, b) => a.name.localeCompare(b.name));
+    else if (sortMode === 'usage') sorted.sort((a, b) => (cardSpends[b.last4] || 0) - (cardSpends[a.last4] || 0));
     return sorted;
   }, [portfolio, sortMode, cardSpends]);
 
-  // Native Drag and Drop Logic
-  const onDragStart = (idx) => {
-    if (sortMode !== 'custom') return;
-    setDraggedIdx(idx);
-  };
-
+  const onDragStart = (idx) => sortMode === 'custom' && setDraggedIdx(idx);
   const onDragOver = (e, idx) => {
     e.preventDefault();
     if (draggedIdx === null || draggedIdx === idx) return;
-    
-    const newPortfolio = [...portfolio];
-    const draggedItem = newPortfolio.splice(draggedIdx, 1)[0];
-    newPortfolio.splice(idx, 0, draggedItem);
-    
-    setPortfolio(newPortfolio);
+    const newP = [...portfolio];
+    const item = newP.splice(draggedIdx, 1)[0];
+    newP.splice(idx, 0, item);
+    setPortfolio(newP);
     setDraggedIdx(idx);
   };
-
-  const onDragEnd = () => {
-    setDraggedIdx(null);
-    syncPortfolio(portfolio);
-  };
+  const onDragEnd = () => { setDraggedIdx(null); syncPortfolio(portfolio); };
 
   const openEditModal = (card) => {
     const fetchedSpend = cardSpends[card.last4] || 0;
@@ -204,14 +201,19 @@ export default function App() {
 
   const addNewCard = () => {
     const newId = `card_${Date.now()}`;
-    const newCard = {
-        id: newId, name: 'Platinum Plus', bank: 'Bank', last4: '0000', limit: 100000,
-        stmtDate: 1, dueDate: 15, bg: PREMIUM_GRADIENTS[Math.floor(Math.random() * PREMIUM_GRADIENTS.length)],
-        network: 'visa'
-    };
+    const newCard = { id: newId, name: 'Platinum Card', bank: 'New Bank', last4: '0000', limit: 100000, stmtDate: 1, dueDate: 15, bg: PREMIUM_GRADIENTS[Math.floor(Math.random() * PREMIUM_GRADIENTS.length)], network: 'visa' };
     const updated = [...portfolio, newCard];
     setPortfolio(updated);
     syncPortfolio(updated);
+  };
+
+  const deleteCard = (id) => {
+    if (window.confirm("Purge card from terminal?")) {
+        const updated = portfolio.filter(c => c.id !== id);
+        setPortfolio(updated);
+        syncPortfolio(updated);
+        setEditingCard(null);
+    }
   };
 
   const syncPortfolio = async (p) => {
@@ -223,8 +225,8 @@ export default function App() {
     const updatedP = portfolio.map(c => c.id === editingCard.id ? { ...c, name: editForm.name, bank: editForm.bank, last4: editForm.last4, network: editForm.network, stmtDate: editForm.stmtDate, dueDate: editForm.dueDate } : c);
     setPortfolio(updatedP);
     await syncPortfolio(updatedP);
-    const fetchedSpend = cardSpends[editForm.last4] || 0;
-    const newAdj = editForm.balance - fetchedSpend;
+    const fSpend = cardSpends[editForm.last4] || 0;
+    const newAdj = editForm.balance - fSpend;
     const newConfig = { ...customConfig, [editForm.last4]: { limit: editForm.limit, adjustment: newAdj, emis: editForm.emis } };
     setCustomConfig(newConfig);
     try { await fetch(GOOGLE_APPS_SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ card: editForm.last4, limit: editForm.limit, adjustment: newAdj, emis: JSON.stringify(editForm.emis) }) }); } catch (e) {}
@@ -243,7 +245,7 @@ export default function App() {
     return (
       <div className="min-h-screen bg-[#05070a] flex flex-col items-center justify-center p-4 selection:bg-indigo-500/30 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_-20%,_#312e81_0%,_transparent_50%)] opacity-40"></div>
-        <div className={`bg-white/5 backdrop-blur-3xl border border-white/10 p-10 md:p-14 rounded-[3.5rem] w-full max-w-sm shadow-[0_0_80px_rgba(0,0,0,0.5)] transition-all duration-500 relative z-10 ${pinError ? 'animate-shake border-rose-500/50' : ''}`}>
+        <div className={`bg-white/5 backdrop-blur-3xl border border-white/10 p-10 md:p-14 rounded-[4rem] w-full max-w-sm shadow-[0_0_80px_rgba(0,0,0,0.5)] transition-all duration-500 relative z-10 ${pinError ? 'animate-shake border-rose-500/50' : ''}`}>
           <div className="flex flex-col items-center mb-14 text-center">
             <div className="w-16 h-16 bg-gradient-to-tr from-indigo-600 to-blue-400 rounded-2xl flex items-center justify-center shadow-lg mb-8">
               <ShieldCheck className="w-8 h-8 text-white" />
@@ -294,17 +296,17 @@ export default function App() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <div className="bg-[#0c1017] border border-white/5 rounded-[2rem] p-7 md:p-8 shadow-2xl relative overflow-hidden">
-            <div className="text-gray-500 text-[9px] font-black uppercase tracking-[0.3em] mb-3">Available Line</div>
+          <div className="bg-[#0c1017] border border-white/5 rounded-[2rem] p-7 md:p-8 shadow-2xl relative overflow-hidden group">
+            <div className="text-gray-500 text-[9px] font-black uppercase tracking-[0.3em] mb-3">Total Credit Line</div>
             <div className="text-3xl md:text-4xl font-black text-white tracking-tighter">{formatInr(totalLimit)}</div>
           </div>
-          <div className="bg-[#0c1017] border border-white/5 rounded-[2rem] p-7 md:p-8 shadow-2xl relative overflow-hidden">
+          <div className="bg-[#0c1017] border border-white/5 rounded-[2rem] p-7 md:p-8 shadow-2xl relative overflow-hidden group">
             <div className="text-gray-500 text-[9px] font-black uppercase tracking-[0.3em] mb-3 flex items-center gap-2"><TrendingUp size={12} className="text-rose-500" /> Net Debt</div>
             <div className="text-3xl md:text-4xl font-black text-white tracking-tighter">{isLoading ? '...' : formatInr(totalSpent)}</div>
             <div className="absolute bottom-0 left-0 h-1 bg-white/5 w-full"><div className="h-full bg-gradient-to-r from-rose-500 to-indigo-500 transition-all duration-1000 shadow-[0_0_15px_rgba(244,63,94,0.4)]" style={{ width: `${(totalSpent/totalLimit)*100}%` }}></div></div>
           </div>
-          <div className="bg-[#0c1017] border border-white/5 rounded-[2rem] p-7 md:p-8 shadow-2xl relative overflow-hidden">
-            <div className="text-gray-500 text-[9px] font-black uppercase tracking-[0.3em] mb-3 flex items-center gap-2"><PieChart size={12} className="text-emerald-500" /> Utilization</div>
+          <div className="bg-[#0c1017] border border-white/5 rounded-[2rem] p-7 md:p-8 shadow-2xl relative overflow-hidden group text-center md:text-left">
+            <div className="text-gray-500 text-[9px] font-black uppercase tracking-[0.3em] mb-3 flex items-center justify-center md:justify-start gap-2"><PieChart size={12} className="text-emerald-500" /> Utilization</div>
             <div className="text-3xl md:text-4xl font-black text-white tracking-tighter">{isLoading ? '...' : `${((totalSpent / totalLimit) * 100).toFixed(1)}%`}</div>
           </div>
         </div>
@@ -313,101 +315,70 @@ export default function App() {
       <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-10 pb-32">
         <div className="lg:col-span-2 space-y-8">
           
-          {/* Sorting Controller */}
           <div className="flex items-center justify-between px-2">
             <h2 className="text-sm font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
                <ArrowUpDown size={14} /> View Order
             </h2>
             <div className="flex bg-white/5 p-1 rounded-xl border border-white/5">
-              {[
-                { id: 'custom', label: 'Custom' },
-                { id: 'usage', label: 'Usage' },
-                { id: 'alphabetical', label: 'A-Z' }
-              ].map(mode => (
-                <button 
-                  key={mode.id}
-                  onClick={() => setSortMode(mode.id)}
-                  className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${sortMode === mode.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
-                >
-                  {mode.label}
-                </button>
+              {[{ id: 'custom', label: 'Custom' }, { id: 'usage', label: 'Usage' }, { id: 'alphabetical', label: 'A-Z' }].map(mode => (
+                <button key={mode.id} onClick={() => setSortMode(mode.id)} className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${sortMode === mode.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}>{mode.label}</button>
               ))}
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {displayPortfolio.map((card, index) => {
-              const fetchedSpend = cardSpends[card.last4] || 0;
+              const fSpend = cardSpends[card.last4] || 0;
               const config = customConfig[card.last4] || {};
-              const spent = fetchedSpend + (config.adjustment || 0);
+              const spent = fSpend + (config.adjustment || 0);
               const activeLimit = config.limit || card.limit;
               const util = Math.min(100, (spent / activeLimit) * 100);
               const dates = getDates(card.stmtDate, card.dueDate);
-              const cardEmis = config.emis || [];
-              const monthlyEmiTotal = cardEmis.reduce((sum, e) => sum + Number(e.emiAmount || 0), 0);
+              const monthlyEmi = (config.emis || []).reduce((sum, e) => sum + Number(e.emiAmount || 0), 0);
 
               return (
-                <div 
-                  key={card.id} 
-                  draggable={sortMode === 'custom'}
-                  onDragStart={() => onDragStart(index)}
-                  onDragOver={(e) => onDragOver(e, index)}
-                  onDragEnd={onDragEnd}
-                  className={`group relative bg-[#0c1017] border border-white/5 rounded-[2.5rem] p-2 transition-all hover:border-indigo-500/20 ${draggedIdx === index ? 'opacity-20 scale-95' : 'opacity-100'} ${sortMode === 'custom' ? 'cursor-grab active:cursor-grabbing' : ''}`}
-                >
+                <div key={card.id} draggable={sortMode === 'custom'} onDragStart={() => onDragStart(index)} onDragOver={(e) => onDragOver(e, index)} onDragEnd={onDragEnd} className={`group relative bg-[#0c1017] border border-white/5 rounded-[2.5rem] p-2 transition-all hover:border-indigo-500/20 ${draggedIdx === index ? 'opacity-20 scale-95' : 'opacity-100'} ${sortMode === 'custom' ? 'cursor-grab active:cursor-grabbing' : ''}`}>
                   <div className={`relative h-52 rounded-[2rem] p-7 flex flex-col justify-between overflow-hidden ${card.bg} shadow-2xl`}>
                     <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none"></div>
                     {card.image && <div className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay" style={{ backgroundImage: `url('${card.image}')` }}></div>}
                     <div className="flex justify-between items-start z-10">
                       <div>
                         <div className="text-white font-black tracking-tight text-lg drop-shadow-xl uppercase truncate w-32">{card.bank}</div>
-                        <div className="text-white/80 text-[9px] font-bold tracking-[0.2em] uppercase mt-1 truncate w-32">{card.name}</div>
+                        <div className="text-white/80 text-[10px] font-bold tracking-[0.2em] uppercase mt-1 truncate w-32">{card.name}</div>
                       </div>
-                      <div className="z-20 drop-shadow-2xl">
-                        <CardNetworkLogo network={card.network} />
-                      </div>
+                      <div className="z-20 drop-shadow-2xl"><CardNetworkLogo network={card.network} /></div>
                     </div>
                     <div className="z-10 flex justify-between items-end">
                       <div className="font-mono text-xl md:text-2xl tracking-[0.3em] text-white flex gap-3 drop-shadow-2xl font-black">
                         <span className="opacity-40">••••</span><span>{card.last4}</span>
                       </div>
-                      {sortMode === 'custom' && (
-                        <div className="p-2 bg-black/20 rounded-lg text-white/40 group-hover:text-white/80 transition-all">
-                           <GripVertical size={16} />
-                        </div>
-                      )}
+                      {sortMode === 'custom' && <div className="p-2 bg-black/20 rounded-lg text-white/40"><GripVertical size={16} /></div>}
                     </div>
                   </div>
 
                   <div className="p-7 space-y-6 relative">
-                    <button onClick={() => openEditModal(card)} className="absolute top-4 right-6 p-2.5 text-gray-600 hover:text-white hover:bg-white/5 rounded-xl transition-all z-20">
-                      <Settings size={18} />
-                    </button>
+                    <button onClick={() => openEditModal(card)} className="absolute top-4 right-6 p-2.5 text-gray-600 hover:text-white hover:bg-white/5 rounded-xl transition-all z-20"><Settings size={18} /></button>
                     <div className="flex justify-between items-end">
                       <div>
                         <div className="text-[8px] text-gray-500 uppercase font-black tracking-[0.2em] mb-1.5">Live Spend</div>
                         <div className={`text-2xl font-black ${spent < 0 ? 'text-emerald-400' : 'text-white'} tracking-tighter`}>{isLoading ? '...' : formatInr(spent)}</div>
                       </div>
                       <div className="text-right">
-                        <div className="text-[8px] text-gray-500 uppercase font-black tracking-[0.2em] mb-1.5">Monthly installments</div>
-                        <div className="text-lg font-black text-amber-400 tracking-tighter">{formatInr(monthlyEmiTotal)}</div>
+                        <div className="text-[8px] text-gray-500 uppercase font-black tracking-[0.2em] mb-1.5">Installments</div>
+                        <div className="text-lg font-black text-amber-400 tracking-tighter">{formatInr(monthlyEmi)}</div>
                       </div>
                     </div>
-                    <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden shadow-inner">
                       <div className={`h-full rounded-full transition-all duration-1000 ${util > 30 ? 'bg-amber-500' : 'bg-indigo-600'}`} style={{ width: `${util}%` }}></div>
                     </div>
                     <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
                       <div className="flex flex-col gap-1">
                         <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest">Statement</span>
-                        <div className="flex items-center gap-1.5 text-[10px] font-black text-white">
-                           <Calendar size={10} className="text-indigo-400" /> {dates.stmt}
-                        </div>
+                        <div className="flex items-center gap-1.5 text-[10px] font-black text-white"><Calendar size={10} className="text-indigo-400" /> {dates.stmt}</div>
                       </div>
                       <div className="flex flex-col gap-1 text-right">
                         <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest">Payment Due</span>
-                        <div className={`flex items-center justify-end gap-1.5 text-[10px] font-black ${dates.daysToDue <= 7 ? 'text-rose-500' : 'text-white'}`}>
-                           {dates.due} <Clock size={10} />
-                        </div>
+                        <div className={`flex items-center justify-end gap-1.5 text-[10px] font-black ${dates.daysToDue <= 7 ? 'text-rose-500' : 'text-white'}`}>{dates.due} <Clock size={10} /></div>
                       </div>
                     </div>
                   </div>
@@ -419,9 +390,7 @@ export default function App() {
 
         <div className="space-y-10">
           <div className="bg-[#0c1017] border border-white/5 rounded-[2.5rem] p-8 shadow-2xl">
-            <h2 className="text-lg font-black flex items-center gap-3 mb-8 uppercase tracking-tighter text-white">
-              <RefreshCcw size={18} className="text-indigo-500" /> Activity Hub
-            </h2>
+            <h2 className="text-lg font-black flex items-center gap-3 mb-8 uppercase tracking-tighter text-white"><RefreshCcw size={18} className="text-indigo-500" /> Activity</h2>
             {isLoading ? (
               <div className="flex justify-center items-center py-20"><Loader2 size={32} className="text-indigo-600 animate-spin" /></div>
             ) : (
@@ -450,127 +419,59 @@ export default function App() {
         </div>
       </main>
 
-      {/* Advanced Edit Modal */}
       {editingCard && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-2xl z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-[#0c1017] border border-white/10 rounded-[3rem] w-full max-w-2xl shadow-2xl my-auto flex flex-col transition-all">
             <div className="p-8 border-b border-white/5 flex justify-between items-center">
-              <div>
-                <h3 className="text-xl font-black text-white uppercase tracking-tighter">Vault Config</h3>
-                <p className="text-[9px] font-black text-indigo-500 uppercase mt-1 tracking-widest leading-none">Security Key: {editingCard.last4}</p>
-              </div>
+              <div><h3 className="text-xl font-black text-white uppercase tracking-tighter">Vault Protocol</h3><p className="text-[9px] font-black text-indigo-500 uppercase mt-1 tracking-widest leading-none">Security Key: {editingCard.last4}</p></div>
               <button onClick={() => setEditingCard(null)} className="p-3 bg-white/5 rounded-xl text-gray-500 hover:text-white transition-all"><X size={20}/></button>
             </div>
-            
             <div className="p-8 overflow-y-auto custom-scrollbar space-y-10 max-h-[60vh]">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Descriptor</label>
-                  <input value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none uppercase text-xs" />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Institution</label>
-                  <input value={editForm.bank} onChange={(e) => setEditForm({...editForm, bank: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none uppercase text-xs" />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Protocol ID (Last 4)</label>
-                  <input value={editForm.last4} onChange={(e) => setEditForm({...editForm, last4: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none text-xs" maxLength={4} />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Network Logic</label>
-                  <select value={editForm.network} onChange={(e) => setEditForm({...editForm, network: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none uppercase text-[10px]">
-                    <option value="visa">Visa</option>
-                    <option value="mastercard">Mastercard</option>
-                    <option value="amex">Amex</option>
-                    <option value="rupay">RuPay</option>
-                  </select>
-                </div>
+                <div><label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Descriptor</label><input value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none uppercase text-xs" /></div>
+                <div><label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Institution</label><input value={editForm.bank} onChange={(e) => setEditForm({...editForm, bank: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none uppercase text-xs" /></div>
+                <div><label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Protocol ID (Last 4)</label><input value={editForm.last4} onChange={(e) => setEditForm({...editForm, last4: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none text-xs" maxLength={4} /></div>
+                <div><label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Network Logic</label><select value={editForm.network} onChange={(e) => setEditForm({...editForm, network: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none uppercase text-[10px]"><option value="visa">Visa</option><option value="mastercard">Mastercard</option><option value="amex">Amex</option><option value="rupay">RuPay</option></select></div>
               </div>
-
-              <div className="grid grid-cols-2 gap-6 pt-6 border-t border-white/5 text-center">
-                <div>
-                  <label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Stmt Date</label>
-                  <input type="number" min="1" max="31" value={editForm.stmtDate} onChange={(e) => setEditForm({...editForm, stmtDate: Number(e.target.value)})} className="w-full bg-white/[0.03] border border-white/5 rounded-[1.5rem] px-5 py-4 text-white font-black text-center text-xs" />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Due Date</label>
-                  <input type="number" min="1" max="31" value={editForm.dueDate} onChange={(e) => setEditForm({...editForm, dueDate: Number(e.target.value)})} className="w-full bg-white/[0.03] border border-white/5 rounded-[1.5rem] px-5 py-4 text-white font-black text-center text-xs" />
-                </div>
-              </div>
-
               <div className="grid grid-cols-2 gap-6 pt-6 border-t border-white/5">
-                <div>
-                  <label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Credit Line</label>
-                  <input type="number" value={editForm.limit} onChange={(e) => setEditForm({...editForm, limit: Number(e.target.value)})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none text-xs" />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Manual Balance</label>
-                  <input type="number" value={editForm.balance} onChange={(e) => setEditForm({...editForm, balance: Number(e.target.value)})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none text-xs" />
-                </div>
+                <div><label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Stmt Date</label><input type="number" min="1" max="31" value={editForm.stmtDate} onChange={(e) => setEditForm({...editForm, stmtDate: Number(e.target.value)})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black text-center text-xs" /></div>
+                <div><label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Due Date</label><input type="number" min="1" max="31" value={editForm.dueDate} onChange={(e) => setEditForm({...editForm, dueDate: Number(e.target.value)})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black text-center text-xs" /></div>
               </div>
-
+              <div className="grid grid-cols-2 gap-6 pt-6 border-t border-white/5">
+                <div><label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Credit Line</label><input type="number" value={editForm.limit} onChange={(e) => setEditForm({...editForm, limit: Number(e.target.value)})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none text-xs" /></div>
+                <div><label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Manual Balance</label><input type="number" value={editForm.balance} onChange={(e) => setEditForm({...editForm, balance: Number(e.target.value)})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none text-xs" /></div>
+              </div>
               <div className="space-y-6 pt-6 border-t border-white/5">
-                <div className="flex justify-between items-center">
-                   <label className="block text-[9px] font-black text-gray-500 uppercase tracking-widest">EMI Inventory</label>
-                   <button onClick={() => setEditForm({...editForm, emis: [...editForm.emis, { id: Date.now(), merchant: '', emiAmount: 0, totalLoanAmount: 0, interestRate: 0, tenureRemaining: 12 }]})} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-lg">
-                     <Plus size={12}/> Add Loan
-                   </button>
-                </div>
+                <div className="flex justify-between items-center"><label className="block text-[9px] font-black text-gray-500 uppercase tracking-widest">EMI Inventory</label><button onClick={() => setEditForm({...editForm, emis: [...editForm.emis, { id: Date.now(), merchant: '', emiAmount: 0, totalLoanAmount: 0, interestRate: 0, tenureRemaining: 12 }]})} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-lg"><Plus size={12}/> New Loan</button></div>
                 <div className="space-y-5">
                   {editForm.emis.map((emi) => (
                     <div key={emi.id} className="p-6 bg-black/40 rounded-3xl border border-white/5 space-y-5 relative">
                       <button onClick={() => setEditForm({ ...editForm, emis: editForm.emis.filter(e => e.id !== emi.id) })} className="absolute top-4 right-4 text-gray-700 hover:text-rose-500 transition-colors"><Trash2 size={16}/></button>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                         <div className="col-span-1 md:col-span-2">
-                           <label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Description</label>
-                           <input placeholder="e.g. iPhone 15 Pro" value={emi.merchant} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, merchant: e.target.value} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-xs font-black text-white outline-none" />
+                         <div className="col-span-1 md:col-span-2"><label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Purchase</label><input placeholder="e.g. iPhone 15 Pro" value={emi.merchant} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, merchant: e.target.value} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-xs font-black text-white outline-none" /></div>
+                         <div className="grid grid-cols-2 gap-3">
+                           <div><label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Monthly EMI</label><input type="number" value={emi.emiAmount} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, emiAmount: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[10px] font-black text-white outline-none" /></div>
+                           <div><label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Total Amount</label><input type="number" value={emi.totalLoanAmount} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, totalLoanAmount: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[10px] font-black text-white outline-none" /></div>
                          </div>
                          <div className="grid grid-cols-2 gap-3">
-                           <div>
-                             <label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Monthly EMI</label>
-                             <input type="number" value={emi.emiAmount} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, emiAmount: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[10px] font-black text-white outline-none" />
-                           </div>
-                           <div>
-                             <label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Total Amount</label>
-                             <input type="number" value={emi.totalLoanAmount} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, totalLoanAmount: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[10px] font-black text-white outline-none" />
-                           </div>
-                         </div>
-                         <div className="grid grid-cols-2 gap-3">
-                           <div>
-                             <label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Rate %</label>
-                             <input type="number" value={emi.interestRate} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, interestRate: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[10px] font-black text-white outline-none" />
-                           </div>
-                           <div>
-                             <label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Months Left</label>
-                             <input type="number" value={emi.tenureRemaining} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, tenureRemaining: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[10px] font-black text-white outline-none" />
-                           </div>
+                           <div><label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Rate %</label><input type="number" value={emi.interestRate} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, interestRate: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[10px] font-black text-white outline-none" /></div>
+                           <div><label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Months Left</label><input type="number" value={emi.tenureRemaining} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, tenureRemaining: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[10px] font-black text-white outline-none" /></div>
                          </div>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
-
-              <button onClick={() => deleteCard(editingCard.id)} className="w-full py-4 bg-rose-500/5 hover:bg-rose-500/10 text-rose-500 rounded-2xl text-[9px] font-black uppercase tracking-[0.4em] transition-all flex items-center justify-center gap-2 border border-rose-500/10">
-                  <Trash2 size={14} /> Purge Terminal
-              </button>
+              <button onClick={() => deleteCard(editingCard.id)} className="w-full py-4 bg-rose-500/5 hover:bg-rose-500/10 text-rose-500 rounded-2xl text-[9px] font-black uppercase tracking-[0.4em] transition-all flex items-center justify-center gap-2 border border-rose-500/10"><Trash2 size={14} /> Purge Terminal</button>
             </div>
-            
             <div className="p-8 bg-black/50 border-t border-white/5 flex gap-4">
               <button disabled={isSaving} onClick={() => setEditingCard(null)} className="flex-1 py-4 rounded-2xl font-black text-gray-500 hover:text-white transition-all uppercase text-[9px] tracking-widest">Discard</button>
-              <button disabled={isSaving} onClick={saveEdit} className="flex-[2] flex items-center justify-center gap-2 py-4 rounded-2xl font-black bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-lg uppercase text-[9px] tracking-widest">
-                {isSaving ? <Loader2 size={14} className="animate-spin" /> : 'Synchronize'}
-              </button>
+              <button disabled={isSaving} onClick={saveEdit} className="flex-[2] flex items-center justify-center gap-2 py-4 rounded-2xl font-black bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-lg uppercase text-[9px] tracking-widest">{isSaving ? <Loader2 size={14} className="animate-spin" /> : 'Synchronize'}</button>
             </div>
           </div>
         </div>
       )}
-      
-      <style dangerouslySetInnerHTML={{__html: `
-        .custom-scrollbar::-webkit-scrollbar { width: 3px; } 
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; } 
-        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(255,255,255,0.05); border-radius: 10px; } 
-      `}} />
+      <style dangerouslySetInnerHTML={{__html: `.custom-scrollbar::-webkit-scrollbar { width: 3px; } .custom-scrollbar::-webkit-scrollbar-track { background: transparent; } .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(255,255,255,0.05); border-radius: 10px; }`}} />
     </div>
   );
 }
