@@ -6,13 +6,13 @@ const CardNetworkLogo = ({ network }) => {
   switch (network?.toLowerCase()) {
     case 'visa':
       return (
-        <svg viewBox="0 0 100 32" className="h-6 w-auto" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 100 32" className="h-6 w-auto drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
           <path d="M37.1 3.2l-3.3 22.3h-5.2l3.3-22.3h5.2zm21.6 0l-4.1 14.2-.2-1.1c-.7-3.4-3.8-13.1-3.8-13.1h-5.4l-.1.4c0 0 10.6 25.4 11.2 25.4h5.4l8.1-25.8h-11.1zm22.5 0c-1.1 0-2 .7-2.4 1.7l-8.4 20.6h5.4l1.1-3.1h6.6l.6 3.1h4.8l-4.2-22.3h-3.5zm-2.1 14.8l2.5-7.1 1.4 7.1h-3.9zm-63.8-14.8l-5.1 14.8-.5-2.7c-.9-4.7-4.8-12.1-4.8-12.1H0l.1.5c4.1 1 8.6 5.6 11.4 11l6.1 16.2h5.5l9.2-25.4h-6.8z" fill="white" />
         </svg>
       );
     case 'mastercard':
       return (
-        <svg viewBox="0 0 24 24" className="h-8 w-auto" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 24 24" className="h-8 w-auto drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
           <circle cx="7" cy="12" r="7" fill="#EB001B" />
           <circle cx="17" cy="12" r="7" fill="#F79E1B" />
           <path d="M12 17.5c1.7-1.4 2.7-3.5 2.7-5.5s-1-4.1-2.7-5.5c-1.7 1.4-2.7 3.5-2.7 5.5s1 4.1 2.7 5.5z" fill="#FF5F00" />
@@ -20,16 +20,21 @@ const CardNetworkLogo = ({ network }) => {
       );
     case 'amex':
       return (
-        <div className="bg-white/10 p-1 rounded-sm border border-white/20">
-          <div className="bg-[#016fcf] text-white font-bold px-1.5 py-0.5 text-[10px] leading-tight tracking-tighter">AMERICAN<br/>EXPRESS</div>
+        <div className="bg-white/10 p-1 rounded-sm border border-white/20 shadow-sm">
+          <div className="bg-[#016fcf] text-white font-bold px-1.5 py-0.5 text-[10px] leading-tight tracking-tighter uppercase">American Express</div>
         </div>
       );
     case 'rupay':
       return (
-        <svg viewBox="0 0 120 40" className="h-7 w-auto" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12.5 5.5l-4.2 24.3h7.1l1.5-8.5h4.1c4.5 0 7.2-2.3 8.1-7.2.9-4.9-1.2-8.6-6.1-8.6h-10.5zm7.3 6.8h2.6c1.8 0 2.5.7 2.2 2.5-.3 1.8-1.2 2.5-3 2.5h-2.6l.8-5zm22.4-6.8l-4.2 24.3h7.1l1.1-6.4c1.1 1 2.9 1.5 4.8 1.5 6.2 0 10.1-4.7 11.2-11.2 1.1-6.5-2.2-11.2-8.4-11.2-2.1 0-3.9.7-5 2l.6-3h-7.2zm11.2 12.2c-.5 3.1-2.4 5.3-5.2 5.3-2.1 0-3.2-1.3-2.7-4 .5-3.1 2.4-5.3 5.3-5.3 2 0 3.2 1.3 2.6 4zm16.5-20.1l-6.4 36.9h8.3l1.8-10.5h10.4l-1.8 10.5h8.3l6.4-36.9h-8.3l-1.8 10.5H68.1l1.8-10.5h-8.3zm38.2 10.4l-3.3 4.2h3.5l-1.5 8.5h-3.5l-2.4 3.1h-4.4l2.4-3.1h-1.5l-3.3 4.2h-4.4l11-13.9 1.5-8.5 4.2-5.4h4.4l-4.2 5.4h1.5l3.3-4.2h4.4z" fill="white"/>
-          <path d="M112 5.5l-8 10h5l3-10h-0z" fill="#ff9933"/>
-        </svg>
+        <div className="flex flex-col items-center">
+          <svg viewBox="0 0 100 30" className="h-7 w-auto drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 5h12c4 0 6 2 6 5s-2 5-6 5h-7l-1 5h-5l1-15zm9 6c1 0 1.5-0.5 1.5-1.5s-0.5-1.5-1.5-1.5h-5l-0.5 3h5.5z" fill="white" />
+            <path d="M35 11h5l1-6h-5l-1 6zm-2 14h5l1-6h-5l-1 6zm30-14h5l1-6h-5l-1 6zm-2 14h5l1-6h-5l-1 6z" fill="white" opacity="0.8" />
+            <path d="M85 5l-8 10h6l4-10h-2z" fill="#FF9933" />
+            <path d="M78 15l-8 10h6l4-10h-2z" fill="#138808" />
+            <text x="32" y="21" fontFamily="sans-serif" fontWeight="900" fontSize="18" fill="white" fontStyle="italic">RuPay</text>
+          </svg>
+        </div>
       );
     default:
       return null;
