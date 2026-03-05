@@ -98,6 +98,7 @@ export default function App() {
   const [editingCard, setEditingCard] = useState(null);
   const [editForm, setEditForm] = useState({ name: '', bank: '', last4: '', limit: 0, balance: 0, emis: [], network: 'visa', stmtDate: 1, dueDate: 15 });
   const [editingTransaction, setEditingTransaction] = useState(null);
+  const [previousEditingCard, setPreviousEditingCard] = useState(null);
   const [editTxForm, setEditTxForm] = useState({ merchant: '', amount: 0, date: '', card: '' });
   const [cardTxFilter, setCardTxFilter] = useState('year'); // 'all', 'year', 'month'
   
@@ -358,7 +359,14 @@ export default function App() {
     return dateStr;
   };
 
-  const openEditTxModal = (tx) => {
+  const openEditTxModal = (tx, fromCardModal = false) => {
+    if (fromCardModal) {
+      setPreviousEditingCard(editingCard);
+      setEditingCard(null);
+    } else {
+      setPreviousEditingCard(null);
+    }
+
     setEditTxForm({
       merchant: tx.merchant,
       amount: tx.amount,
@@ -371,6 +379,14 @@ export default function App() {
     setEditingTransaction(tx);
   };
 
+  const closeTxModal = () => {
+    setEditingTransaction(null);
+    if (previousEditingCard) {
+      setEditingCard(previousEditingCard);
+      setPreviousEditingCard(null);
+    }
+  };
+
   const saveTxEdit = () => {
     // Note: To properly update this in Google Sheets, an explicit API method is needed.
     // For now, updating local state to reflect UI change.
@@ -381,7 +397,7 @@ export default function App() {
       return t;
     });
     setTransactions(updatedTransactions);
-    setEditingTransaction(null);
+    closeTxModal();
   };
 
   const saveEdit = async () => {
@@ -436,9 +452,7 @@ export default function App() {
       <header className="max-w-7xl mx-auto mb-10 md:mb-16">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-10 text-center md:text-left">
           <div className="flex items-center gap-4 justify-center md:justify-start">
-            <div className="p-3 bg-indigo-600 rounded-2xl shadow-lg">
-              <ShieldCheck className="text-white w-7 h-7" />
-            </div>
+            <img src="/favicon.svg" alt="ccdeck logo" className="w-12 h-12 drop-shadow-xl" />
             <div>
               <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white tracking-tight leading-none uppercase">ccdeck</h1>
               <p className="text-gray-500 font-bold tracking-[0.2em] mt-2 uppercase text-[9px]">Financial Control v2.0</p>
@@ -708,23 +722,23 @@ export default function App() {
 
             {/* Right Side: Card Activity */}
             <div className="flex flex-col w-full md:w-1/2 bg-gray-100 dark:bg-[#05070a]/50 relative z-0 transition-colors">
-              <div className="p-6 md:p-8 border-b border-gray-200 dark:border-white/5 flex justify-between items-center shrink-0">
+              <div className="p-6 md:p-8 border-b border-gray-200 dark:border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0">
                 <div>
                   <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter flex items-center gap-3"><RefreshCcw size={24} className="text-indigo-500"/> Transactions</h3>
                   <p className="text-xs font-black text-gray-500 uppercase mt-1 tracking-widest leading-none">Ending in {editingCard.last4}</p>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 w-full md:w-auto">
                   <select
                     value={cardTxFilter}
                     onChange={(e) => setCardTxFilter(e.target.value)}
-                    className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white text-[10px] font-black uppercase tracking-widest rounded-xl px-4 py-3 outline-none"
+                    className="flex-1 md:flex-none bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white text-[10px] font-black uppercase tracking-widest rounded-xl px-4 py-3 outline-none min-w-0"
                   >
                     <option value="year">This Year</option>
                     <option value="statement">Current Statement</option>
                     <option value="all">All Time</option>
                   </select>
                   {/* Desktop close button */}
-                  <button onClick={() => setEditingCard(null)} className="hidden md:block p-3 bg-gray-200 dark:bg-white/5 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all"><X size={20}/></button>
+                  <button onClick={() => setEditingCard(null)} className="hidden md:block p-3 shrink-0 bg-gray-200 dark:bg-white/5 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all"><X size={20}/></button>
                 </div>
               </div>
 
@@ -766,7 +780,7 @@ export default function App() {
                       const formattedDate = !isNaN(d) ? d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Unknown Date';
 
                       return (
-                        <div key={idx} onClick={() => {setEditingTransaction(tx); setEditingCard(null);}} className="flex justify-between items-center p-5 rounded-2xl bg-white dark:bg-white/[0.02] hover:bg-gray-50 dark:hover:bg-white/[0.05] border border-gray-200 dark:border-white/5 group cursor-pointer transition-colors shadow-sm">
+                        <div key={idx} onClick={() => openEditTxModal(tx, true)} className="flex justify-between items-center p-5 rounded-2xl bg-white dark:bg-white/[0.02] hover:bg-gray-50 dark:hover:bg-white/[0.05] border border-gray-200 dark:border-white/5 group cursor-pointer transition-colors shadow-sm">
                           <div className="flex gap-4 items-center overflow-hidden flex-1">
                             <div className="overflow-hidden flex-1">
                               <div className="font-black text-gray-900 dark:text-white text-base truncate group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors uppercase tracking-tight">{tx.merchant}</div>
@@ -814,7 +828,7 @@ export default function App() {
               </div>
             </div>
             <div className="p-8 bg-gray-50 dark:bg-black/50 border-t border-gray-200 dark:border-white/5 flex gap-4">
-              <button onClick={() => setEditingTransaction(null)} className="flex-1 py-4 rounded-2xl font-black text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all uppercase text-[9px] tracking-widest">Discard</button>
+              <button onClick={closeTxModal} className="flex-1 py-4 rounded-2xl font-black text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all uppercase text-[9px] tracking-widest">Discard</button>
               <button onClick={saveTxEdit} className="flex-[2] py-4 rounded-2xl font-black bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-lg uppercase text-[9px] tracking-widest">Update Locally</button>
             </div>
           </div>

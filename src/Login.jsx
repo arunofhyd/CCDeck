@@ -46,9 +46,7 @@ export default function Login() {
 
       <div className="bg-white dark:bg-white/5 backdrop-blur-3xl border border-gray-200 dark:border-white/10 p-10 md:p-14 rounded-[4rem] w-full max-w-md shadow-2xl dark:shadow-[0_0_80px_rgba(0,0,0,0.5)] relative z-10 transition-colors">
         <div className="flex flex-col items-center mb-10 text-center">
-          <div className="w-16 h-16 bg-gradient-to-tr from-indigo-600 to-blue-400 rounded-2xl flex items-center justify-center shadow-lg mb-8">
-            <ShieldCheck className="w-8 h-8 text-white" />
-          </div>
+          <img src="/favicon.svg" alt="ccdeck logo" className="w-20 h-20 mb-6 drop-shadow-2xl" />
           <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight leading-none mb-1">ccdeck</h1>
           <p className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 tracking-[0.4em] uppercase">Secure Access</p>
         </div>

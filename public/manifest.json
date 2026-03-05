@@ -1,0 +1,17 @@
+{
+  "name": "ccdeck",
+  "short_name": "ccdeck",
+  "description": "Financial Control v2.0",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#05070a",
+  "theme_color": "#05070a",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
