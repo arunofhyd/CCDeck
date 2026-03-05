@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { CreditCard, AlertCircle, Calendar, IndianRupee, PieChart, TrendingUp, ShieldCheck, Zap, Loader2, Settings, Pencil, X, Lock, RefreshCcw, Delete, Plus, Trash2, Info, CreditCard as CardIcon, ChevronRight, Clock, ArrowUpDown, GripVertical, Eye, EyeOff, LogOut } from 'lucide-react';
 import Login from './Login';
 import SetupWizard from './SetupWizard';
+import ProfileMenu from './ProfileMenu';
 import { auth, db } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -55,6 +56,9 @@ const CardNetworkLogo = ({ network }) => {
   }
 };
 
+// Removed initial cards for testing purposes
+const INITIAL_PORTFOLIO = [];
+
 const formatInr = (amount) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
 
 const getLastStatementDate = (stmtDay) => {
@@ -107,14 +111,22 @@ export default function App() {
       if (currentUser) {
         try {
           const docRef = doc(db, 'users', currentUser.uid);
-          const docSnap = await getDoc(docRef);
+          const getDocPromise = getDoc(docRef);
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 5000));
+
+          const docSnap = await Promise.race([getDocPromise, timeoutPromise]);
+
           if (docSnap.exists() && docSnap.data().appScriptUrl) {
             setAppScriptUrl(docSnap.data().appScriptUrl);
           } else {
-            setAppScriptUrl('');
+            // Check local storage fallback
+            const localUrl = localStorage.getItem('ccdeck_appScriptUrl');
+            setAppScriptUrl(localUrl || '');
           }
         } catch (e) {
-          console.error("Error fetching user doc:", e);
+          console.error("Error fetching user doc, using fallback:", e);
+          const localUrl = localStorage.getItem('ccdeck_appScriptUrl');
+          setAppScriptUrl(localUrl || '');
         }
       } else {
         setAppScriptUrl('');
@@ -130,22 +142,47 @@ export default function App() {
     const fetchLiveData = async () => {
       setIsLoading(true);
       try {
-        const docRef = doc(db, 'users', user.uid);
-        const docSnap = await getDoc(docRef);
         let userPortfolio = [];
         let userConfig = {};
 
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          if (data.portfolio) {
-             userPortfolio = JSON.parse(data.portfolio);
-             setPortfolio(userPortfolio);
+        try {
+          const docRef = doc(db, 'users', user.uid);
+          const getDocPromise = getDoc(docRef);
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 5000));
+          const docSnap = await Promise.race([getDocPromise, timeoutPromise]);
+
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data.portfolio) {
+               userPortfolio = JSON.parse(data.portfolio);
+               // If for some reason it's empty, use initial
+               if (userPortfolio.length === 0) {
+                 userPortfolio = INITIAL_PORTFOLIO;
+                 setDoc(doc(db, "users", user.uid), { portfolio: JSON.stringify(INITIAL_PORTFOLIO) }, { merge: true }).catch(()=>{});
+               }
+            } else {
+               // First time or missing
+               userPortfolio = INITIAL_PORTFOLIO;
+               setDoc(doc(db, "users", user.uid), { portfolio: JSON.stringify(INITIAL_PORTFOLIO) }, { merge: true }).catch(()=>{});
+            }
+
+            if (data.customConfig) {
+               userConfig = JSON.parse(data.customConfig);
+            }
+          } else {
+               // User document doesn't exist but somehow has appScriptUrl (unlikely, but safe fallback)
+               userPortfolio = INITIAL_PORTFOLIO;
+               setDoc(doc(db, "users", user.uid), { portfolio: JSON.stringify(INITIAL_PORTFOLIO) }, { merge: true }).catch(()=>{});
           }
-          if (data.customConfig) {
-             userConfig = JSON.parse(data.customConfig);
-             setCustomConfig(userConfig);
-          }
+        } catch (e) {
+          console.warn("Firestore fetch timed out or failed, using local fallback state", e);
+          // Fallback to local state if firestore fails
+          userPortfolio = portfolio.length > 0 ? portfolio : INITIAL_PORTFOLIO;
+          userConfig = customConfig;
         }
+
+        setPortfolio(userPortfolio);
+        setCustomConfig(userConfig);
 
         // Fetch from AppScript
         const response = await fetch(appScriptUrl + '?t=' + Date.now(), { cache: 'no-store' });
@@ -350,14 +387,6 @@ export default function App() {
     return <SetupWizard user={user} onComplete={(url) => setAppScriptUrl(url)} />;
   }
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-    } catch (e) {
-      console.error("Error signing out:", e);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-[#05070a] text-gray-100 p-4 md:p-10 font-sans selection:bg-indigo-500/30 overflow-x-hidden">
       <header className="max-w-7xl mx-auto mb-10 md:mb-16">
@@ -378,9 +407,7 @@ export default function App() {
             <button onClick={() => window.location.reload()} disabled={isLoading} className="flex-1 md:flex-none bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-7 py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-2 shadow-lg text-[10px] uppercase tracking-widest">
                 {isLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCcw size={16} />} Sync
             </button>
-            <button onClick={handleLogout} className="flex-none p-4 rounded-2xl bg-white/5 hover:bg-rose-500/10 text-gray-400 hover:text-rose-500 transition-all border border-transparent hover:border-rose-500/20">
-               <LogOut size={16} />
-            </button>
+            <ProfileMenu user={user} />
           </div>
         </div>
 

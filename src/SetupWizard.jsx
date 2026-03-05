@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ShieldCheck, ChevronRight, Check, Loader2, Copy, ExternalLink, Settings } from 'lucide-react';
+import ProfileMenu from './ProfileMenu';
 import { db } from './firebase';
 import { doc, setDoc } from 'firebase/firestore';
 
@@ -33,12 +34,24 @@ export default function SetupWizard({ user, onComplete }) {
     setIsSaving(true);
     setError('');
     try {
-      await setDoc(doc(db, "users", user.uid), {
+      // Use Promise.race to prevent getting stuck if Firestore hangs
+      const savePromise = setDoc(doc(db, "users", user.uid), {
         appScriptUrl: webAppUrl
       }, { merge: true });
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Timeout saving to database")), 5000)
+      );
+
+      await Promise.race([savePromise, timeoutPromise]);
+      localStorage.setItem('ccdeck_appScriptUrl', webAppUrl); // Fallback storage
       onComplete(webAppUrl);
     } catch (err) {
-      setError("Failed to save URL: " + err.message);
+      console.warn("Firestore save failed, falling back to local storage:", err);
+      // Fallback: Even if Firestore fails, allow the user to proceed locally
+      localStorage.setItem('ccdeck_appScriptUrl', webAppUrl);
+      onComplete(webAppUrl);
+    } finally {
       setIsSaving(false);
     }
   };
@@ -51,6 +64,53 @@ export default function SetupWizard({ user, onComplete }) {
 
   const appScriptCode = `// ccdeck Apps Script Integration
 const SPREADSHEET_ID = "${sheetId}";
+
+function syncTransactions() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheets()[0];
+
+  // Create headers if empty
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(['date', 'merchant', 'amount', 'card']);
+  }
+
+  // Search for recent transaction emails (adjust query as needed)
+  const threads = GmailApp.search('subject:"transaction" OR subject:"payment" OR subject:"spent" in:inbox newer_than:7d');
+
+  // Get existing dates to avoid duplicates (basic check)
+  const existingData = sheet.getDataRange().getValues();
+  const existingDates = new Set(existingData.map(row => row[0].toString()));
+
+  let newRows = [];
+
+  for (let thread of threads) {
+    const messages = thread.getMessages();
+    for (let msg of messages) {
+      const body = msg.getPlainBody();
+      const dateStr = msg.getDate().toISOString();
+
+      if (existingDates.has(dateStr)) continue;
+
+      // Basic extraction logic (needs tailoring to your specific bank emails)
+      let amountMatch = body.match(/(?:Rs\.?|INR)\s*([\\d,]+\\.?\\d*)/i);
+      let cardMatch = body.match(/(?:ending in|card no\.?)\s*x{0,4}(\\d{4})/i);
+      let merchantMatch = body.match(/at\\s+(.*?)\\s+(?:on|for)/i) || body.match(/info:\\s*(.*?)\\s*\\n/i);
+
+      if (amountMatch && cardMatch) {
+        const amount = amountMatch[1].replace(/,/g, '');
+        const card = cardMatch[1];
+        const merchant = merchantMatch ? merchantMatch[1].trim() : 'Unknown Merchant';
+
+        newRows.push([dateStr, merchant, amount, card]);
+        existingDates.add(dateStr);
+      }
+    }
+  }
+
+  if (newRows.length > 0) {
+    sheet.getRange(sheet.getLastRow() + 1, 1, newRows.length, 4).setValues(newRows);
+  }
+}
 
 function doPost(e) {
   try {
@@ -84,6 +144,13 @@ function doPost(e) {
 }
 
 function doGet(e) {
+  // Trigger sync on load
+  try {
+    syncTransactions();
+  } catch(e) {
+    // Ignore sync errors to still return data
+  }
+
   try {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const mainSheet = ss.getSheets()[0];
@@ -150,6 +217,10 @@ function doOptions(e) {
       <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_-20%,_#312e81_0%,_transparent_50%)] opacity-40"></div>
 
       <div className="bg-white/5 backdrop-blur-3xl border border-white/10 p-8 md:p-12 rounded-[3rem] w-full max-w-2xl shadow-[0_0_80px_rgba(0,0,0,0.5)] relative z-10 overflow-y-auto max-h-[90vh] custom-scrollbar">
+        <div className="absolute top-6 right-6">
+          <ProfileMenu user={user} />
+        </div>
+
         <div className="flex flex-col items-center mb-8 text-center">
           <div className="w-16 h-16 bg-gradient-to-tr from-indigo-600 to-blue-400 rounded-2xl flex items-center justify-center shadow-lg mb-6">
             <Settings className="w-8 h-8 text-white" />
