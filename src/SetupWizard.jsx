@@ -92,8 +92,8 @@ function extractCreditCardTransactions() {
     }
   }
 
-  // Broader search to catch all variations of spending and payments
-  const gmailTransactionFilter = 'after:2025/12/31 (subject:"Transaction" OR subject:"Spent" OR subject:"charge" OR subject:"debited" OR subject:"payment" OR subject:"credited" OR subject:"alert" OR subject:"txn" OR subject:"purchase" OR "debited" OR "spent" OR "credited" OR "payment received" OR "transaction alert")';
+  // Comprehensive search for Indian bank transaction/refund/payment keywords
+  const gmailTransactionFilter = 'after:2023/12/31 (subject:"Transaction" OR subject:"Spent" OR subject:"charge" OR subject:"debited" OR subject:"payment" OR subject:"credited" OR subject:"alert" OR subject:"txn" OR subject:"purchase" OR subject:"refund" OR subject:"reversal" OR "debited" OR "spent" OR "credited" OR "payment received" OR "transaction alert" OR "refund initiated" OR "repayment")';
   const emailThreads = GmailApp.search(gmailTransactionFilter);
 
   for (let i = 0; i < emailThreads.length; i++) {
@@ -109,9 +109,9 @@ function extractCreditCardTransactions() {
       const emailDate = currentEmail.getDate();
       const emailSubject = currentEmail.getSubject();
 
-      // Strict payment check to prevent false positives
-      const isPayment = /(?:payment (?:received|successful|credited)|credited to|payment of rs|thank you for your payment)/i.test(emailSubject) ||
-                        /(?:payment (?:received|successful|credited)|credited to|payment of rs|thank you for your payment)/i.test(emailBody);
+      // Comprehensive check for Indian bank Refunds, Reversals, and Bill Payments
+      const isPayment = /(?:payment (?:received|successful|credited)|credited to|payment of rs|thank you for your payment|refund(?:ed| of| initiated| processed)|reversal|reversed|repayment)/i.test(emailSubject) ||
+                        /(?:payment (?:received|successful|credited)|credited to|payment of rs|thank you for your payment|refund(?:ed| of| initiated| processed)|reversal|reversed|repayment)/i.test(emailBody);
 
       let spendAmount = parseSpendAmount(emailBody) || parseSpendAmount(emailSubject);
       let cardSuffix = parseCardSuffix(emailBody) || parseCardSuffix(emailSubject);
@@ -137,7 +137,8 @@ function extractCreditCardTransactions() {
 }
 
 function parseSpendAmount(textData) {
-  const currencyPattern = /(?:Rs\\.?|INR)\\s*([\\d,]+(?:\\.\\d+)?)/i;
+  // Handles Rs. 100, Rs 100, INR 100, Rs.100.50
+  const currencyPattern = /(?:Rs\\.?|INR\\.?)\\s*([\\d,]+(?:\\.\\d+)?)/i;
   const matchResult = currencyPattern.exec(textData);
   if (matchResult) return parseFloat(matchResult[1].replace(/,/g, ''));
   return null;
@@ -151,10 +152,12 @@ function parseCardSuffix(textData) {
 }
 
 function parseMerchantName(textData) {
+  // Ordered from most specific to least specific for Indian Bank formats (HDFC, SBI, ICICI, Axis, Amex)
   const patterns = [
-    /(?:merchant|info|remarks|description|desc)\\s*[:\\-]\\s*([A-Za-z0-9\\s\\.\\*\\-\\&]+)/i,
+    /(?:merchant|info|remarks|description|desc)\\s*[:\\-]\\s*([A-Za-z0-9\\s\\.\\*\\-\\&]+?)(?:\\r?\\n|$)/i,
     /(?:at|to|towards)\\s+([A-Za-z0-9\\s\\.\\*\\-\\&]+?)\\s+(?:on|using|via|for|from|through|with)/i,
-    /(?:at|to|towards)\\s+([A-Za-z0-9\\s\\.\\*\\-\\&]{3,35})(?:\\.|$|(?=\\r?\\n))/i
+    /spent\\s+(?:Rs\\.?|INR\\.?)\\s*[\\d,]+(?:\\.\\d+)?\\s+(?:at|on)\\s+([A-Za-z0-9\\s\\.\\*\\-\\&]+)/i,
+    /(?:at|to|towards)\\s+([A-Za-z0-9\\s\\.\\*\\-\\&]{3,40})(?:\\.|$|(?=\\r?\\n))/i
   ];
   for (let pattern of patterns) {
     const matchResult = pattern.exec(textData);

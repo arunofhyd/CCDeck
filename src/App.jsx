@@ -99,6 +99,7 @@ export default function App() {
   const [editForm, setEditForm] = useState({ name: '', bank: '', last4: '', limit: 0, balance: 0, emis: [], network: 'visa', stmtDate: 1, dueDate: 15 });
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [editTxForm, setEditTxForm] = useState({ merchant: '', amount: 0, date: '', card: '' });
+  const [cardTxFilter, setCardTxFilter] = useState('year'); // 'all', 'year', 'month'
   
   const [sortMode, setSortMode] = useState('custom');
   const [sortDirection, setSortDirection] = useState('desc');
@@ -594,77 +595,160 @@ export default function App() {
       </main>
 
       {editingCard && (
-        <div className="fixed inset-0 bg-black/95 backdrop-blur-2xl z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-[#0c1017] border border-white/10 rounded-[3rem] w-full max-w-2xl shadow-2xl my-auto flex flex-col transition-all">
-            <div className="p-8 border-b border-white/5 flex justify-between items-center">
-              <div><h3 className="text-xl font-black text-white uppercase tracking-tighter">Credit Card Details</h3><p className="text-[9px] font-black text-indigo-500 uppercase mt-1 tracking-widest leading-none">Card Ending: {editingCard.last4}</p></div>
-              <button onClick={() => setEditingCard(null)} className="p-3 bg-white/5 rounded-xl text-gray-500 hover:text-white transition-all"><X size={20}/></button>
-            </div>
-            <div className="p-8 overflow-y-auto custom-scrollbar space-y-10 max-h-[60vh]">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div><label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Descriptor</label><input value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none uppercase text-xs" /></div>
-                <div><label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Institution</label><input value={editForm.bank} onChange={(e) => setEditForm({...editForm, bank: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none uppercase text-xs" /></div>
-                <div><label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Card Ending in</label><input value={editForm.last4} onChange={(e) => setEditForm({...editForm, last4: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none text-xs" maxLength={4} /></div>
-                <div><label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Network Logic</label><select value={editForm.network} onChange={(e) => setEditForm({...editForm, network: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none uppercase text-[10px]"><option value="visa">Visa</option><option value="mastercard">Mastercard</option><option value="amex">Amex</option><option value="rupay">RuPay</option></select></div>
-              </div>
-              <div className="grid grid-cols-2 gap-6 pt-6 border-t border-white/5">
-                <div><label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Stmt Date</label><input type="number" min="1" max="31" value={editForm.stmtDate} onChange={(e) => setEditForm({...editForm, stmtDate: Number(e.target.value)})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black text-center text-xs" /></div>
-                <div><label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Due Date</label><input type="number" min="1" max="31" value={editForm.dueDate} onChange={(e) => setEditForm({...editForm, dueDate: Number(e.target.value)})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black text-center text-xs" /></div>
-              </div>
-              <div className="grid grid-cols-2 gap-6 pt-6 border-t border-white/5">
-                <div><label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Credit Line</label><input type="number" value={editForm.limit} onChange={(e) => setEditForm({...editForm, limit: Number(e.target.value)})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none text-xs" /></div>
-                <div><label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Outstanding Bal / Live Spend</label><input type="number" value={editForm.balance} onChange={(e) => setEditForm({...editForm, balance: Number(e.target.value)})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none text-xs" /></div>
-              </div>
-              <div className="space-y-6 pt-6 border-t border-white/5">
-                <div className="flex justify-between items-center"><label className="block text-[9px] font-black text-gray-500 uppercase tracking-widest">EMI Inventory</label><button onClick={() => setEditForm({...editForm, emis: [...editForm.emis, { id: Date.now(), merchant: '', emiAmount: 0, totalLoanAmount: 0, interestRate: 0, tenureRemaining: 12, firstPaymentMonth: '', totalTenure: 12 }]})} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-lg"><Plus size={12}/> New Loan</button></div>
-                <div className="space-y-5">
-                  {editForm.emis.map((emi) => {
-                    let endText = '';
-                    if (emi.firstPaymentMonth && emi.totalTenure) {
-                      const [year, month] = emi.firstPaymentMonth.split('-');
-                      const d = new Date(year, month - 1);
-                      d.setMonth(d.getMonth() + Number(emi.totalTenure) - 1);
-                      endText = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-                    } else if (emi.tenureRemaining) {
-                      const d = new Date();
-                      d.setMonth(d.getMonth() + Number(emi.tenureRemaining) - 1);
-                      endText = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-                    }
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-2xl z-50 flex items-center justify-center p-4 md:p-8 overflow-y-auto">
+          <div className="bg-[#0c1017] border border-white/10 rounded-[3rem] w-full max-w-6xl shadow-2xl my-auto flex flex-col md:flex-row transition-all h-[90vh]">
 
-                    return (
-                      <div key={emi.id} className="p-6 bg-black/40 rounded-3xl border border-white/5 space-y-5 relative">
-                        <button onClick={() => setEditForm({ ...editForm, emis: editForm.emis.filter(e => e.id !== emi.id) })} className="absolute top-4 right-4 text-gray-700 hover:text-rose-500 transition-colors"><Trash2 size={16}/></button>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                          <div className="col-span-1 md:col-span-2"><label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Purchase</label><input placeholder="e.g. iPhone 15 Pro" value={emi.merchant} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, merchant: e.target.value} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-xs font-black text-white outline-none" /></div>
-                          <div className="grid grid-cols-2 gap-3">
-                            <div><label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Monthly EMI</label><input type="number" value={emi.emiAmount} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, emiAmount: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[10px] font-black text-white outline-none" /></div>
-                            <div><label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Total Amount</label><input type="number" value={emi.totalLoanAmount} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, totalLoanAmount: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[10px] font-black text-white outline-none" /></div>
+            {/* Left Side: Settings */}
+            <div className="flex flex-col w-full md:w-1/2 border-b md:border-b-0 md:border-r border-white/5 bg-[#0c1017] z-10">
+              <div className="p-6 md:p-8 border-b border-white/5 flex justify-between items-center bg-[#0c1017] shrink-0 rounded-tl-[3rem] md:rounded-bl-[3rem]">
+                <div>
+                  <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Card Config</h3>
+                  <p className="text-xs font-black text-indigo-500 uppercase mt-1 tracking-widest leading-none">Settings & Limits</p>
+                </div>
+                {/* Mobile close button only */}
+                <button onClick={() => setEditingCard(null)} className="md:hidden p-3 bg-white/5 rounded-xl text-gray-500 hover:text-white transition-all"><X size={20}/></button>
+              </div>
+
+              <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar flex-1 space-y-10">
+                <div className="grid grid-cols-1 gap-6">
+                  <div><label className="block text-[11px] font-black text-gray-500 uppercase mb-3 tracking-widest">Descriptor</label><input value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-4 text-white font-black outline-none uppercase text-sm" /></div>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div><label className="block text-[11px] font-black text-gray-500 uppercase mb-3 tracking-widest">Institution</label><input value={editForm.bank} onChange={(e) => setEditForm({...editForm, bank: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-4 text-white font-black outline-none uppercase text-sm" /></div>
+                    <div><label className="block text-[11px] font-black text-gray-500 uppercase mb-3 tracking-widest">Ending In</label><input value={editForm.last4} onChange={(e) => setEditForm({...editForm, last4: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-4 text-white font-black outline-none text-sm" maxLength={4} /></div>
+                  </div>
+                  <div><label className="block text-[11px] font-black text-gray-500 uppercase mb-3 tracking-widest">Network Logic</label><select value={editForm.network} onChange={(e) => setEditForm({...editForm, network: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-4 text-white font-black outline-none uppercase text-sm"><option value="visa">Visa</option><option value="mastercard">Mastercard</option><option value="amex">Amex</option><option value="rupay">RuPay</option></select></div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6 pt-6 border-t border-white/5">
+                  <div><label className="block text-[11px] font-black text-gray-500 uppercase mb-3 tracking-widest">Stmt Date</label><input type="number" min="1" max="31" value={editForm.stmtDate} onChange={(e) => setEditForm({...editForm, stmtDate: Number(e.target.value)})} className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-4 text-white font-black text-center text-sm" /></div>
+                  <div><label className="block text-[11px] font-black text-gray-500 uppercase mb-3 tracking-widest">Due Date</label><input type="number" min="1" max="31" value={editForm.dueDate} onChange={(e) => setEditForm({...editForm, dueDate: Number(e.target.value)})} className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-4 text-white font-black text-center text-sm" /></div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6 pt-6 border-t border-white/5">
+                  <div><label className="block text-[11px] font-black text-gray-500 uppercase mb-3 tracking-widest">Credit Line</label><input type="number" value={editForm.limit} onChange={(e) => setEditForm({...editForm, limit: Number(e.target.value)})} className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-4 text-white font-black outline-none text-sm" /></div>
+                  <div><label className="block text-[11px] font-black text-gray-500 uppercase mb-3 tracking-widest">Live Spend</label><input type="number" value={editForm.balance} onChange={(e) => setEditForm({...editForm, balance: Number(e.target.value)})} className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-4 text-white font-black outline-none text-sm" /></div>
+                </div>
+
+                <div className="space-y-6 pt-6 border-t border-white/5">
+                  <div className="flex justify-between items-center"><label className="block text-[11px] font-black text-gray-500 uppercase tracking-widest">EMI Inventory</label><button onClick={() => setEditForm({...editForm, emis: [...editForm.emis, { id: Date.now(), merchant: '', emiAmount: 0, totalLoanAmount: 0, interestRate: 0, tenureRemaining: 12, firstPaymentMonth: '', totalTenure: 12 }]})} className="px-5 py-3 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg"><Plus size={14}/> New Loan</button></div>
+                  <div className="space-y-6">
+                    {editForm.emis.map((emi) => {
+                      let endText = '';
+                      if (emi.firstPaymentMonth && emi.totalTenure) {
+                        const [year, month] = emi.firstPaymentMonth.split('-');
+                        const d = new Date(year, month - 1);
+                        d.setMonth(d.getMonth() + Number(emi.totalTenure) - 1);
+                        endText = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                      } else if (emi.tenureRemaining) {
+                        const d = new Date();
+                        d.setMonth(d.getMonth() + Number(emi.tenureRemaining) - 1);
+                        endText = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                      }
+
+                      return (
+                        <div key={emi.id} className="p-6 bg-black/40 rounded-[2rem] border border-white/5 space-y-6 relative">
+                          <button onClick={() => setEditForm({ ...editForm, emis: editForm.emis.filter(e => e.id !== emi.id) })} className="absolute top-5 right-5 p-2 bg-rose-500/10 rounded-xl text-rose-500 hover:bg-rose-500 hover:text-white transition-colors"><Trash2 size={16}/></button>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div className="col-span-1 md:col-span-2"><label className="text-[10px] font-black text-gray-600 uppercase mb-2 block tracking-widest">Purchase</label><input placeholder="e.g. iPhone 15 Pro" value={emi.merchant} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, merchant: e.target.value} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-black text-white outline-none" /></div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div><label className="text-[10px] font-black text-gray-600 uppercase mb-2 block tracking-widest">Monthly EMI</label><input type="number" value={emi.emiAmount} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, emiAmount: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-black text-white outline-none" /></div>
+                              <div><label className="text-[10px] font-black text-gray-600 uppercase mb-2 block tracking-widest">Total Amount</label><input type="number" value={emi.totalLoanAmount} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, totalLoanAmount: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-black text-white outline-none" /></div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div><label className="text-[10px] font-black text-gray-600 uppercase mb-2 block tracking-widest">First Pay Mth</label><input type="month" value={emi.firstPaymentMonth || ''} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, firstPaymentMonth: e.target.value} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-black text-white outline-none" style={{ colorScheme: 'dark' }} /></div>
+                              <div><label className="text-[10px] font-black text-gray-600 uppercase mb-2 block tracking-widest">Total Months</label><input type="number" value={emi.totalTenure || emi.tenureRemaining || 12} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, totalTenure: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-black text-white outline-none" /></div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div><label className="text-[10px] font-black text-gray-600 uppercase mb-2 block tracking-widest">Rate %</label><input type="number" value={emi.interestRate} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, interestRate: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-black text-white outline-none" /></div>
+                              <div><label className="text-[10px] font-black text-gray-600 uppercase mb-2 block tracking-widest">Months Left</label><input type="number" value={emi.tenureRemaining} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, tenureRemaining: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-black text-white outline-none" /></div>
+                            </div>
                           </div>
-                          <div className="grid grid-cols-2 gap-3">
-                            <div><label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">First Pay Mth (Opt)</label><input type="month" value={emi.firstPaymentMonth || ''} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, firstPaymentMonth: e.target.value} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[10px] font-black text-white outline-none" style={{ colorScheme: 'dark' }} /></div>
-                            <div><label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Total Months</label><input type="number" value={emi.totalTenure || emi.tenureRemaining || 12} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, totalTenure: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[10px] font-black text-white outline-none" /></div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-3">
-                            <div><label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Rate %</label><input type="number" value={emi.interestRate} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, interestRate: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[10px] font-black text-white outline-none" /></div>
-                            <div><label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Months Left</label><input type="number" value={emi.tenureRemaining} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, tenureRemaining: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[10px] font-black text-white outline-none" /></div>
-                          </div>
+                          {endText && (
+                            <div className="mt-5 pt-5 border-t border-white/5 text-right">
+                               <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Active Until: {endText}</span>
+                            </div>
+                          )}
                         </div>
-                        {endText && (
-                          <div className="mt-4 pt-4 border-t border-white/5 text-right">
-                             <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Active Until: {endText}</span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="pt-6">
+                  <button onClick={() => deleteCard(editingCard.id)} className="w-full py-5 bg-rose-500/5 hover:bg-rose-500/10 text-rose-500 rounded-2xl text-[11px] font-black uppercase tracking-[0.4em] transition-all flex items-center justify-center gap-3 border border-rose-500/10"><Trash2 size={16} /> Delete Card</button>
                 </div>
               </div>
-              <button onClick={() => deleteCard(editingCard.id)} className="w-full py-4 bg-rose-500/5 hover:bg-rose-500/10 text-rose-500 rounded-2xl text-[9px] font-black uppercase tracking-[0.4em] transition-all flex items-center justify-center gap-2 border border-rose-500/10"><Trash2 size={14} /> Delete Card</button>
+
+              <div className="p-6 md:p-8 bg-[#0a0d13] border-t border-white/5 flex gap-4 shrink-0 rounded-bl-[3rem] md:rounded-bl-none md:rounded-br-none">
+                <button disabled={isSaving} onClick={() => setEditingCard(null)} className="flex-1 py-5 rounded-2xl font-black text-gray-500 hover:text-white hover:bg-white/5 transition-all uppercase text-[11px] tracking-widest">Discard</button>
+                <button disabled={isSaving} onClick={saveEdit} className="flex-[2] flex items-center justify-center gap-2 py-5 rounded-2xl font-black bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-lg uppercase text-[11px] tracking-widest">{isSaving ? <Loader2 size={16} className="animate-spin" /> : 'Synchronize Settings'}</button>
+              </div>
             </div>
-            <div className="p-8 bg-black/50 border-t border-white/5 flex gap-4">
-              <button disabled={isSaving} onClick={() => setEditingCard(null)} className="flex-1 py-4 rounded-2xl font-black text-gray-500 hover:text-white transition-all uppercase text-[9px] tracking-widest">Discard</button>
-              <button disabled={isSaving} onClick={saveEdit} className="flex-[2] flex items-center justify-center gap-2 py-4 rounded-2xl font-black bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-lg uppercase text-[9px] tracking-widest">{isSaving ? <Loader2 size={14} className="animate-spin" /> : 'Synchronize'}</button>
+
+            {/* Right Side: Card Activity */}
+            <div className="flex flex-col w-full md:w-1/2 bg-[#05070a]/50 relative z-0">
+              <div className="p-6 md:p-8 border-b border-white/5 flex justify-between items-center shrink-0">
+                <div>
+                  <h3 className="text-2xl font-black text-white uppercase tracking-tighter flex items-center gap-3"><RefreshCcw size={24} className="text-indigo-500"/> Transactions</h3>
+                  <p className="text-xs font-black text-gray-500 uppercase mt-1 tracking-widest leading-none">Ending in {editingCard.last4}</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <select
+                    value={cardTxFilter}
+                    onChange={(e) => setCardTxFilter(e.target.value)}
+                    className="bg-white/5 border border-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-xl px-4 py-3 outline-none"
+                  >
+                    <option value="year">This Year</option>
+                    <option value="month">This Month</option>
+                    <option value="all">All Time</option>
+                  </select>
+                  {/* Desktop close button */}
+                  <button onClick={() => setEditingCard(null)} className="hidden md:block p-3 bg-white/5 rounded-xl text-gray-500 hover:text-white transition-all"><X size={20}/></button>
+                </div>
+              </div>
+
+              <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar flex-1">
+                <div className="space-y-4">
+                  {(() => {
+                    const cardTxs = transactions.filter(tx => tx.card === editingCard.last4);
+                    let filteredTxs = cardTxs;
+
+                    const now = new Date();
+                    if (cardTxFilter === 'year') {
+                       filteredTxs = cardTxs.filter(tx => new Date(tx.date).getFullYear() === now.getFullYear());
+                    } else if (cardTxFilter === 'month') {
+                       filteredTxs = cardTxs.filter(tx => {
+                         const d = new Date(tx.date);
+                         return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                       });
+                    }
+
+                    if (filteredTxs.length === 0) {
+                      return <div className="text-center py-20 text-gray-500 text-sm font-black uppercase tracking-widest">No matching transactions found</div>;
+                    }
+
+                    return filteredTxs.map((tx, idx) => {
+                      const isCredit = tx.amount < 0;
+                      const d = new Date(tx.date);
+                      const formattedDate = !isNaN(d) ? d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Unknown Date';
+
+                      return (
+                        <div key={idx} onClick={() => {setEditingTransaction(tx); setEditingCard(null);}} className="flex justify-between items-center p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 group cursor-pointer transition-colors shadow-sm">
+                          <div className="flex gap-4 items-center overflow-hidden flex-1">
+                            <div className="overflow-hidden flex-1">
+                              <div className="font-black text-white text-base truncate group-hover:text-indigo-400 transition-colors uppercase tracking-tight">{tx.merchant}</div>
+                              <div className="text-[10px] font-bold text-gray-500 uppercase mt-1 tracking-widest">{formattedDate}</div>
+                            </div>
+                          </div>
+                          <div className={`font-black text-lg shrink-0 ml-4 ${isCredit ? 'text-emerald-400' : 'text-rose-500'} tracking-tighter`}>{isCredit ? '+' : '-'}{formatInr(Math.abs(tx.amount))}</div>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
             </div>
+
           </div>
         </div>
       )}
