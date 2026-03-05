@@ -100,6 +100,8 @@ export default function App() {
   const [customConfig, setCustomConfig] = useState({});
   const [editingCard, setEditingCard] = useState(null);
   const [editForm, setEditForm] = useState({ name: '', bank: '', last4: '', limit: 0, balance: 0, emis: [], network: 'visa', stmtDate: 1, dueDate: 15 });
+  const [editingTransaction, setEditingTransaction] = useState(null);
+  const [editTxForm, setEditTxForm] = useState({ merchant: '', amount: 0, date: '', card: '' });
   
   const [sortMode, setSortMode] = useState('custom');
   const [sortDirection, setSortDirection] = useState('desc');
@@ -178,23 +180,45 @@ export default function App() {
 
         // Add Mock data fallback if there's no transactions
         if (!data.transactions || data.transactions.length === 0) {
-           setCardSpends({ '2000': 12500, '2002': 5000, '8559': 3500 });
+           setCardSpends({ '2000': 12500, '2002': -5000, '8559': 3500 });
+           setTransactions([
+             { card: '2000', amount: 2500, merchant: 'AMAZON PAY', date: new Date().toISOString() },
+             { card: '2002', amount: -5000, merchant: 'PAYMENT RECEIVED', date: new Date(Date.now() - 86400000).toISOString() },
+             { card: '8559', amount: 3500, merchant: 'FLIPKART', date: new Date(Date.now() - 172800000).toISOString() }
+           ]);
         } else {
            setCardSpends(currentSpends);
+           setTransactions(data.transactions || []);
         }
-
-        setTransactions(data.transactions || []);
         setIsLoading(false);
       } catch (error) {
         console.error("Fetch Live Data Error:", error);
         // Fallback mock data in case of error
-        setCardSpends({ '2000': 12500, '2002': 5000, '8559': 3500 });
-        setTransactions([]);
+        setCardSpends({ '2000': 12500, '2002': -5000, '8559': 3500 });
+        setTransactions([
+          { card: '2000', amount: 2500, merchant: 'AMAZON PAY', date: new Date().toISOString() },
+          { card: '2002', amount: -5000, merchant: 'PAYMENT RECEIVED', date: new Date(Date.now() - 86400000).toISOString() },
+          { card: '8559', amount: 3500, merchant: 'FLIPKART', date: new Date(Date.now() - 172800000).toISOString() }
+        ]);
         setIsLoading(false);
       }
     };
     fetchLiveData();
   }, [isAuthenticated]);
+
+  const groupedTransactions = useMemo(() => {
+    const groups = {};
+    transactions.slice(0, 100).forEach(tx => {
+      const d = new Date(tx.date);
+      if (isNaN(d)) return;
+      const monthYear = d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+      if (!groups[monthYear]) groups[monthYear] = [];
+
+      const formattedDate = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+      groups[monthYear].push({ ...tx, formattedDate });
+    });
+    return groups;
+  }, [transactions]);
 
   const displayPortfolio = useMemo(() => {
     let sorted = [...portfolio];
@@ -263,6 +287,32 @@ export default function App() {
 
   const syncPortfolio = async (p) => {
     try { await fetch(GOOGLE_APPS_SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ card: 'GLOBAL_PORTFOLIO', portfolio: JSON.stringify(p) }) }); } catch (e) {}
+  };
+
+  const openEditTxModal = (tx) => {
+    setEditTxForm({
+      merchant: tx.merchant,
+      amount: tx.amount,
+      date: tx.date,
+      card: tx.card,
+      originalDate: tx.date,
+      originalMerchant: tx.merchant,
+      originalCard: tx.card
+    });
+    setEditingTransaction(tx);
+  };
+
+  const saveTxEdit = () => {
+    // Note: To properly update this in Google Sheets, an explicit API method is needed.
+    // For now, updating local state to reflect UI change.
+    const updatedTransactions = transactions.map(t => {
+      if (t.date === editTxForm.originalDate && t.merchant === editTxForm.originalMerchant && t.card === editTxForm.originalCard) {
+        return { ...t, merchant: editTxForm.merchant, amount: Number(editTxForm.amount), card: editTxForm.card, date: editTxForm.date };
+      }
+      return t;
+    });
+    setTransactions(updatedTransactions);
+    setEditingTransaction(null);
   };
 
   const saveEdit = async () => {
@@ -436,8 +486,11 @@ export default function App() {
                         <div className="text-lg font-black text-amber-400 tracking-tighter">{formatInr(monthlyEmi)}</div>
                       </div>
                     </div>
-                    <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden shadow-inner">
-                      <div className={`h-full rounded-full transition-all duration-1000 ${util > 30 ? 'bg-amber-500' : 'bg-indigo-600'}`} style={{ width: `${util}%` }}></div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden shadow-inner flex-1">
+                        <div className={`h-full rounded-full transition-all duration-1000 ${util > 30 ? 'bg-amber-500' : 'bg-indigo-600'}`} style={{ width: `${util}%` }}></div>
+                      </div>
+                      <span className="text-[8px] font-black text-gray-500 tracking-widest">{util.toFixed(1)}%</span>
                     </div>
                     <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
                       <div className="flex flex-col gap-1">
@@ -458,29 +511,39 @@ export default function App() {
 
         <div className="space-y-10">
           <div className="bg-[#0c1017] border border-white/5 rounded-[2.5rem] p-8 shadow-2xl">
-            <h2 className="text-lg font-black flex items-center gap-3 mb-8 uppercase tracking-tighter text-white"><RefreshCcw size={18} className="text-indigo-500" /> Activity</h2>
+            <h2 className="text-xl font-black flex items-center gap-3 mb-8 uppercase tracking-tighter text-white"><RefreshCcw size={22} className="text-indigo-500" /> Activity Feed</h2>
             {isLoading ? (
               <div className="flex justify-center items-center py-20"><Loader2 size={32} className="text-indigo-600 animate-spin" /></div>
             ) : (
-              <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                {transactions.map((tx, idx) => {
-                  const cardInfo = portfolio.find(c => c.last4 === tx.card);
-                  const isCredit = tx.amount < 0;
-                  return (
-                    <div key={idx} className="flex justify-between items-center p-4 rounded-2xl bg-white/[0.02] border border-white/5 group">
-                      <div className="flex gap-4 items-center overflow-hidden">
-                        <div className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center ${cardInfo?.bg || 'bg-gray-800'} text-white text-[9px] font-black shadow-2xl relative overflow-hidden`}>
-                          <span className="relative z-10">{tx.card}</span>
+              <div className="space-y-8 max-h-[700px] overflow-y-auto pr-2 custom-scrollbar">
+                {Object.entries(groupedTransactions).map(([monthYear, monthTxs], groupIdx) => (
+                  <div key={groupIdx} className="space-y-4">
+                    <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] sticky top-0 bg-[#0c1017]/90 backdrop-blur-md py-2 z-10 border-b border-white/5">
+                      {monthYear}
+                    </h3>
+                    {monthTxs.map((tx, idx) => {
+                      const cardInfo = portfolio.find(c => c.last4 === tx.card);
+                      const isCredit = tx.amount < 0;
+                      return (
+                        <div key={idx} onClick={() => openEditTxModal(tx)} className="flex justify-between items-center p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 group cursor-pointer transition-colors shadow-sm hover:shadow-md">
+                          <div className="flex gap-4 items-center overflow-hidden flex-1">
+                            <div className={`w-12 h-12 shrink-0 rounded-[1rem] flex items-center justify-center ${cardInfo?.bg || 'bg-gray-800'} text-white text-[10px] font-black shadow-xl relative overflow-hidden border border-white/10`}>
+                              <span className="relative z-10">{tx.card}</span>
+                            </div>
+                            <div className="overflow-hidden flex-1">
+                              <div className="font-black text-white text-sm truncate group-hover:text-indigo-400 transition-colors uppercase tracking-tight">{tx.merchant}</div>
+                              <div className="text-[9px] font-bold text-gray-500 uppercase mt-1 tracking-[0.1em]">{tx.formattedDate}</div>
+                            </div>
+                          </div>
+                          <div className={`font-black text-sm shrink-0 ml-4 ${isCredit ? 'text-emerald-400' : 'text-rose-500'} tracking-tighter`}>{isCredit ? '+' : '-'}{formatInr(Math.abs(tx.amount))}</div>
                         </div>
-                        <div className="overflow-hidden">
-                          <div className="font-black text-white text-xs truncate w-24 group-hover:text-indigo-400 transition-colors uppercase tracking-tight">{tx.merchant}</div>
-                          <div className="text-[8px] font-bold text-gray-600 uppercase mt-0.5 tracking-wider">{tx.date}</div>
-                        </div>
-                      </div>
-                      <div className={`font-black text-xs shrink-0 ${isCredit ? 'text-emerald-400' : 'text-rose-500'} tracking-tighter`}>{isCredit ? '+' : '-'}{formatInr(Math.abs(tx.amount))}</div>
-                    </div>
-                  );
-                })}
+                      );
+                    })}
+                  </div>
+                ))}
+                {Object.keys(groupedTransactions).length === 0 && (
+                  <div className="text-center py-10 text-gray-500 text-xs font-black uppercase tracking-widest">No activity found</div>
+                )}
               </div>
             )}
           </div>
@@ -510,24 +573,47 @@ export default function App() {
                 <div><label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Outstanding Bal / Live Spend</label><input type="number" value={editForm.balance} onChange={(e) => setEditForm({...editForm, balance: Number(e.target.value)})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none text-xs" /></div>
               </div>
               <div className="space-y-6 pt-6 border-t border-white/5">
-                <div className="flex justify-between items-center"><label className="block text-[9px] font-black text-gray-500 uppercase tracking-widest">EMI Inventory</label><button onClick={() => setEditForm({...editForm, emis: [...editForm.emis, { id: Date.now(), merchant: '', emiAmount: 0, totalLoanAmount: 0, interestRate: 0, tenureRemaining: 12 }]})} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-lg"><Plus size={12}/> New Loan</button></div>
+                <div className="flex justify-between items-center"><label className="block text-[9px] font-black text-gray-500 uppercase tracking-widest">EMI Inventory</label><button onClick={() => setEditForm({...editForm, emis: [...editForm.emis, { id: Date.now(), merchant: '', emiAmount: 0, totalLoanAmount: 0, interestRate: 0, tenureRemaining: 12, firstPaymentMonth: '', totalTenure: 12 }]})} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-lg"><Plus size={12}/> New Loan</button></div>
                 <div className="space-y-5">
-                  {editForm.emis.map((emi) => (
-                    <div key={emi.id} className="p-6 bg-black/40 rounded-3xl border border-white/5 space-y-5 relative">
-                      <button onClick={() => setEditForm({ ...editForm, emis: editForm.emis.filter(e => e.id !== emi.id) })} className="absolute top-4 right-4 text-gray-700 hover:text-rose-500 transition-colors"><Trash2 size={16}/></button>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                         <div className="col-span-1 md:col-span-2"><label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Purchase</label><input placeholder="e.g. iPhone 15 Pro" value={emi.merchant} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, merchant: e.target.value} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-xs font-black text-white outline-none" /></div>
-                         <div className="grid grid-cols-2 gap-3">
-                           <div><label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Monthly EMI</label><input type="number" value={emi.emiAmount} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, emiAmount: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[10px] font-black text-white outline-none" /></div>
-                           <div><label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Total Amount</label><input type="number" value={emi.totalLoanAmount} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, totalLoanAmount: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[10px] font-black text-white outline-none" /></div>
-                         </div>
-                         <div className="grid grid-cols-2 gap-3">
-                           <div><label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Rate %</label><input type="number" value={emi.interestRate} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, interestRate: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[10px] font-black text-white outline-none" /></div>
-                           <div><label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Months Left</label><input type="number" value={emi.tenureRemaining} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, tenureRemaining: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[10px] font-black text-white outline-none" /></div>
-                         </div>
+                  {editForm.emis.map((emi) => {
+                    let endText = '';
+                    if (emi.firstPaymentMonth && emi.totalTenure) {
+                      const [year, month] = emi.firstPaymentMonth.split('-');
+                      const d = new Date(year, month - 1);
+                      d.setMonth(d.getMonth() + Number(emi.totalTenure) - 1);
+                      endText = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                    } else if (emi.tenureRemaining) {
+                      const d = new Date();
+                      d.setMonth(d.getMonth() + Number(emi.tenureRemaining) - 1);
+                      endText = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                    }
+
+                    return (
+                      <div key={emi.id} className="p-6 bg-black/40 rounded-3xl border border-white/5 space-y-5 relative">
+                        <button onClick={() => setEditForm({ ...editForm, emis: editForm.emis.filter(e => e.id !== emi.id) })} className="absolute top-4 right-4 text-gray-700 hover:text-rose-500 transition-colors"><Trash2 size={16}/></button>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                          <div className="col-span-1 md:col-span-2"><label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Purchase</label><input placeholder="e.g. iPhone 15 Pro" value={emi.merchant} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, merchant: e.target.value} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-xs font-black text-white outline-none" /></div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div><label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Monthly EMI</label><input type="number" value={emi.emiAmount} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, emiAmount: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[10px] font-black text-white outline-none" /></div>
+                            <div><label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Total Amount</label><input type="number" value={emi.totalLoanAmount} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, totalLoanAmount: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[10px] font-black text-white outline-none" /></div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div><label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">First Pay Mth (Opt)</label><input type="month" value={emi.firstPaymentMonth || ''} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, firstPaymentMonth: e.target.value} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[10px] font-black text-white outline-none" style={{ colorScheme: 'dark' }} /></div>
+                            <div><label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Total Months</label><input type="number" value={emi.totalTenure || emi.tenureRemaining || 12} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, totalTenure: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[10px] font-black text-white outline-none" /></div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div><label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Rate %</label><input type="number" value={emi.interestRate} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, interestRate: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[10px] font-black text-white outline-none" /></div>
+                            <div><label className="text-[8px] font-black text-gray-600 uppercase mb-1.5 block tracking-widest">Months Left</label><input type="number" value={emi.tenureRemaining} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, tenureRemaining: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[10px] font-black text-white outline-none" /></div>
+                          </div>
+                        </div>
+                        {endText && (
+                          <div className="mt-4 pt-4 border-t border-white/5 text-right">
+                             <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Active Until: {endText}</span>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
               <button onClick={() => deleteCard(editingCard.id)} className="w-full py-4 bg-rose-500/5 hover:bg-rose-500/10 text-rose-500 rounded-2xl text-[9px] font-black uppercase tracking-[0.4em] transition-all flex items-center justify-center gap-2 border border-rose-500/10"><Trash2 size={14} /> Delete Card</button>
@@ -539,6 +625,42 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {editingTransaction && (
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-2xl z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[#0c1017] border border-white/10 rounded-[3rem] w-full max-w-lg shadow-2xl my-auto flex flex-col transition-all">
+            <div className="p-8 border-b border-white/5 flex justify-between items-center">
+              <div><h3 className="text-xl font-black text-white uppercase tracking-tighter">Edit Transaction</h3><p className="text-[9px] font-black text-indigo-500 uppercase mt-1 tracking-widest leading-none">Manual Override</p></div>
+              <button onClick={() => setEditingTransaction(null)} className="p-3 bg-white/5 rounded-xl text-gray-500 hover:text-white transition-all"><X size={20}/></button>
+            </div>
+            <div className="p-8 space-y-6">
+              <div>
+                <label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Merchant / Description</label>
+                <input value={editTxForm.merchant} onChange={(e) => setEditTxForm({...editTxForm, merchant: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none uppercase text-xs" />
+              </div>
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Amount</label>
+                  <input type="number" value={editTxForm.amount} onChange={(e) => setEditTxForm({...editTxForm, amount: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none text-xs" />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Card Ending</label>
+                  <input value={editTxForm.card} onChange={(e) => setEditTxForm({...editTxForm, card: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none text-xs" maxLength={4} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Date / Time string</label>
+                <input value={editTxForm.date} onChange={(e) => setEditTxForm({...editTxForm, date: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none text-xs" />
+              </div>
+            </div>
+            <div className="p-8 bg-black/50 border-t border-white/5 flex gap-4">
+              <button onClick={() => setEditingTransaction(null)} className="flex-1 py-4 rounded-2xl font-black text-gray-500 hover:text-white transition-all uppercase text-[9px] tracking-widest">Discard</button>
+              <button onClick={saveTxEdit} className="flex-[2] py-4 rounded-2xl font-black bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-lg uppercase text-[9px] tracking-widest">Update Locally</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style dangerouslySetInnerHTML={{__html: `.custom-scrollbar::-webkit-scrollbar { width: 3px; } .custom-scrollbar::-webkit-scrollbar-track { background: transparent; } .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(255,255,255,0.05); border-radius: 10px; }`}} />
     </div>
   );
