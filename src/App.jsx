@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { CreditCard, AlertCircle, Calendar, IndianRupee, PieChart, TrendingUp, ShieldCheck, Zap, Loader2, Settings, Pencil, X, Lock, RefreshCcw, Delete, Plus, Trash2, Info, CreditCard as CardIcon, ChevronRight, Clock, ArrowUpDown, GripVertical, Eye, EyeOff } from 'lucide-react';
+import { CreditCard, AlertCircle, Calendar, IndianRupee, PieChart, TrendingUp, ShieldCheck, Zap, Loader2, Settings, Pencil, X, Lock, RefreshCcw, Delete, Plus, Trash2, Info, CreditCard as CardIcon, ChevronRight, Clock, ArrowUpDown, GripVertical, Eye, EyeOff, LogOut } from 'lucide-react';
+import Login from './Login';
+import SetupWizard from './SetupWizard';
+import { auth, db } from './firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 // Premium Gradient Palette for Dynamic Cards
 const PREMIUM_GRADIENTS = [
@@ -50,19 +55,6 @@ const CardNetworkLogo = ({ network }) => {
   }
 };
 
-// FULLY RESTORED: Your default 9 cards
-const INITIAL_PORTFOLIO = [
-  { id: 'amex', name: 'Amex Blue', bank: 'American Express', last4: '2000', limit: 370000, stmtDate: 2, dueDate: 20, bg: PREMIUM_GRADIENTS[0], image: 'https://images.unsplash.com/photo-1639322537228-f710d846310a?q=80&w=600&auto=format', network: 'amex' },
-  { id: 'millennia', name: 'HDFC Millennia', bank: 'HDFC Bank', last4: '1697', limit: 231000, stmtDate: 6, dueDate: 26, bg: PREMIUM_GRADIENTS[1], image: 'https://images.unsplash.com/photo-1639322537504-6427a16b0a28?q=80&w=600&auto=format', network: 'visa' },
-  { id: 'swiggy', name: 'HDFC Swiggy', bank: 'HDFC Bank', last4: '2569', limit: 185000, stmtDate: 6, dueDate: 26, bg: PREMIUM_GRADIENTS[2], image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&auto=format', network: 'mastercard' },
-  { id: 'amazon', name: 'Amazon Pay', bank: 'ICICI Bank', last4: '2002', limit: 330000, stmtDate: 12, dueDate: 30, bg: PREMIUM_GRADIENTS[3], image: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=600&auto=format', network: 'visa' },
-  { id: 'airtel', name: 'Airtel Axis', bank: 'Axis Bank', last4: '8559', limit: 185000, stmtDate: 12, dueDate: 2, bg: PREMIUM_GRADIENTS[4], image: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=600&auto=format', network: 'rupay' },
-  { id: 'onecard', name: 'OneCard BOB', bank: 'BOB', last4: '8697', limit: 300000, stmtDate: 18, dueDate: 4, bg: PREMIUM_GRADIENTS[5], image: 'https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=600&auto=format', network: 'visa' },
-  { id: 'mojo', name: 'Kotak Mojo', bank: 'Kotak Bank', last4: '8222', limit: 488000, stmtDate: 20, dueDate: 6, bg: PREMIUM_GRADIENTS[6], image: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=600&auto=format', network: 'visa' },
-  { id: 'tiger', name: 'IndusInd Tiger', bank: 'IndusInd Bank', last4: '6688', limit: 200000, stmtDate: 23, dueDate: 11, bg: PREMIUM_GRADIENTS[7], image: 'https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=600&auto=format', network: 'visa' },
-  { id: 'ixigo', name: 'AU ixigo', bank: 'AU Small Finance', last4: '1309', limit: 70000, stmtDate: 24, dueDate: 12, bg: PREMIUM_GRADIENTS[8], image: 'https://images.unsplash.com/photo-1557682250-33bd709cbe85?q=80&w=600&auto=format', network: 'visa' }
-];
-
 const formatInr = (amount) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
 
 const getLastStatementDate = (stmtDay) => {
@@ -89,14 +81,15 @@ const getDates = (stmtDay, dueDay) => {
 };
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [pin, setPin] = useState('');
-  const [pinError, setPinError] = useState(false);
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [appScriptUrl, setAppScriptUrl] = useState('');
+
   const [transactions, setTransactions] = useState([]);
   const [cardSpends, setCardSpends] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [portfolio, setPortfolio] = useState(INITIAL_PORTFOLIO);
+  const [portfolio, setPortfolio] = useState([]);
   const [customConfig, setCustomConfig] = useState({});
   const [editingCard, setEditingCard] = useState(null);
   const [editForm, setEditForm] = useState({ name: '', bank: '', last4: '', limit: 0, balance: 0, emis: [], network: 'visa', stmtDate: 1, dueDate: 15 });
@@ -108,103 +101,90 @@ export default function App() {
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [draggedIdx, setDraggedIdx] = useState(null);
 
-  const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSZk7SCZwdrwokpnjoBREXLwxj3rYUv6mAz-4IJiZhqn7DFDIdftERkfptW1tbkqzy/exec";
-
   useEffect(() => {
-    if (sessionStorage.getItem('mycardhub_unlocked') === 'true') setIsAuthenticated(true);
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        try {
+          const docRef = doc(db, 'users', currentUser.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists() && docSnap.data().appScriptUrl) {
+            setAppScriptUrl(docSnap.data().appScriptUrl);
+          } else {
+            setAppScriptUrl('');
+          }
+        } catch (e) {
+          console.error("Error fetching user doc:", e);
+        }
+      } else {
+        setAppScriptUrl('');
+      }
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
   }, []);
 
-  const addPinNumber = (num) => {
-    if (pin.length < 4) {
-      const nextPin = pin + num;
-      setPin(nextPin);
-      if (nextPin === '4421') {
-        setTimeout(() => { sessionStorage.setItem('mycardhub_unlocked', 'true'); setIsAuthenticated(true); }, 300);
-      } else if (nextPin.length === 4) {
-        setPinError(true);
-        setTimeout(() => { setPin(''); setPinError(false); }, 600);
-      }
-    }
-  };
-
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!user || !appScriptUrl) return;
+
     const fetchLiveData = async () => {
+      setIsLoading(true);
       try {
-        const response = await fetch(GOOGLE_APPS_SCRIPT_URL + '?t=' + Date.now(), { cache: 'no-store' });
-        const data = await response.json();
-        
-        if (data.settings?.GLOBAL_PORTFOLIO?.portfolio) {
-          setPortfolio(JSON.parse(data.settings.GLOBAL_PORTFOLIO.portfolio));
+        const docRef = doc(db, 'users', user.uid);
+        const docSnap = await getDoc(docRef);
+        let userPortfolio = [];
+        let userConfig = {};
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.portfolio) {
+             userPortfolio = JSON.parse(data.portfolio);
+             setPortfolio(userPortfolio);
+          }
+          if (data.customConfig) {
+             userConfig = JSON.parse(data.customConfig);
+             setCustomConfig(userConfig);
+          }
         }
 
-        const processedSettings = {};
-        Object.entries(data.settings || {}).forEach(([card, val]) => {
-            if (card === 'GLOBAL_PORTFOLIO') return;
-            processedSettings[card] = {
-                limit: val.limit,
-                adjustment: val.adjustment,
-                emis: typeof val.emis === 'string' ? JSON.parse(val.emis) : (val.emis || [])
-            };
-        });
-        setCustomConfig(processedSettings);
+        // Fetch from AppScript
+        const response = await fetch(appScriptUrl + '?t=' + Date.now(), { cache: 'no-store' });
+        const data = await response.json();
 
         const currentSpends = {};
-        const p = data.settings?.GLOBAL_PORTFOLIO?.portfolio ? JSON.parse(data.settings.GLOBAL_PORTFOLIO.portfolio) : INITIAL_PORTFOLIO;
+        const p = userPortfolio;
 
         data.transactions?.forEach((row) => {
           const cardNum = String(row.card).trim();
-
-          // Clean amount: strip out anything except numbers, decimal points, and minus signs
           const cleanAmountStr = String(row.amount).replace(/[^\d.-]/g, '');
           const amount = Number(cleanAmountStr);
 
           if (isNaN(amount)) return;
 
-          // Try to parse DD/MM/YYYY or standard ISO date
           let txDate = new Date(row.date);
           if (isNaN(txDate.getTime()) && typeof row.date === 'string') {
             const parts = row.date.split('/');
             if (parts.length === 3) {
-              // DD/MM/YYYY
               txDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00.000Z`);
             }
           }
 
           const cardInfo = p.find(c => c.last4 === cardNum);
           if (cardInfo) {
-            // Include all transactions to ensure spends show up, regardless of statement date filtering
             currentSpends[cardNum] = (currentSpends[cardNum] || 0) + amount;
           }
         });
 
-        // Add Mock data fallback if there's no transactions
-        if (!data.transactions || data.transactions.length === 0) {
-           setCardSpends({ '2000': 12500, '2002': -5000, '8559': 3500 });
-           setTransactions([
-             { card: '2000', amount: 2500, merchant: 'AMAZON PAY', date: new Date().toISOString() },
-             { card: '2002', amount: -5000, merchant: 'PAYMENT RECEIVED', date: new Date(Date.now() - 86400000).toISOString() },
-             { card: '8559', amount: 3500, merchant: 'FLIPKART', date: new Date(Date.now() - 172800000).toISOString() }
-           ]);
-        } else {
-           setCardSpends(currentSpends);
-           setTransactions(data.transactions || []);
-        }
+        setCardSpends(currentSpends);
+        setTransactions(data.transactions || []);
         setIsLoading(false);
       } catch (error) {
         console.error("Fetch Live Data Error:", error);
-        // Fallback mock data in case of error
-        setCardSpends({ '2000': 12500, '2002': -5000, '8559': 3500 });
-        setTransactions([
-          { card: '2000', amount: 2500, merchant: 'AMAZON PAY', date: new Date().toISOString() },
-          { card: '2002', amount: -5000, merchant: 'PAYMENT RECEIVED', date: new Date(Date.now() - 86400000).toISOString() },
-          { card: '8559', amount: 3500, merchant: 'FLIPKART', date: new Date(Date.now() - 172800000).toISOString() }
-        ]);
         setIsLoading(false);
       }
     };
     fetchLiveData();
-  }, [isAuthenticated]);
+  }, [user, appScriptUrl]);
 
   const groupedTransactions = useMemo(() => {
     const groups = {};
@@ -269,6 +249,7 @@ export default function App() {
 
   const addNewCard = () => {
     const newId = `card_${Date.now()}`;
+    // Re-use PREMIUM_GRADIENTS from above
     const newCard = { id: newId, name: 'Platinum Card', bank: 'New Bank', last4: '0000', limit: 100000, stmtDate: 1, dueDate: 15, bg: PREMIUM_GRADIENTS[Math.floor(Math.random() * PREMIUM_GRADIENTS.length)], network: 'visa' };
     const updated = [...portfolio, newCard];
     setPortfolio(updated);
@@ -286,7 +267,14 @@ export default function App() {
   };
 
   const syncPortfolio = async (p) => {
-    try { await fetch(GOOGLE_APPS_SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ card: 'GLOBAL_PORTFOLIO', portfolio: JSON.stringify(p) }) }); } catch (e) {}
+    if (!user) return;
+    try {
+      await setDoc(doc(db, "users", user.uid), {
+        portfolio: JSON.stringify(p)
+      }, { merge: true });
+    } catch (e) {
+      console.error("Failed to sync portfolio", e);
+    }
   };
 
   const openEditTxModal = (tx) => {
@@ -316,15 +304,25 @@ export default function App() {
   };
 
   const saveEdit = async () => {
+    if (!user) return;
     setIsSaving(true);
     const updatedP = portfolio.map(c => c.id === editingCard.id ? { ...c, name: editForm.name, bank: editForm.bank, last4: editForm.last4, network: editForm.network, stmtDate: editForm.stmtDate, dueDate: editForm.dueDate } : c);
     setPortfolio(updatedP);
     await syncPortfolio(updatedP);
+
     const fSpend = cardSpends[editForm.last4] || 0;
     const newAdj = editForm.balance - fSpend;
     const newConfig = { ...customConfig, [editForm.last4]: { limit: editForm.limit, adjustment: newAdj, emis: editForm.emis } };
     setCustomConfig(newConfig);
-    try { await fetch(GOOGLE_APPS_SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ card: editForm.last4, limit: editForm.limit, adjustment: newAdj, emis: JSON.stringify(editForm.emis) }) }); } catch (e) {}
+
+    try {
+      await setDoc(doc(db, "users", user.uid), {
+        customConfig: JSON.stringify(newConfig)
+      }, { merge: true });
+    } catch (e) {
+      console.error("Failed to save config", e);
+    }
+
     setIsSaving(false);
     setEditingCard(null);
   };
@@ -336,36 +334,29 @@ export default function App() {
     return sum + Math.max(0, fSpend + adj);
   }, 0);
 
-  if (!isAuthenticated) {
+  if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#05070a] flex flex-col items-center justify-center p-4 selection:bg-indigo-500/30 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_-20%,_#312e81_0%,_transparent_50%)] opacity-40"></div>
-        <div className={`bg-white/5 backdrop-blur-3xl border border-white/10 p-10 md:p-14 rounded-[4rem] w-full max-w-sm shadow-[0_0_80px_rgba(0,0,0,0.5)] transition-all duration-500 relative z-10 ${pinError ? 'animate-shake border-rose-500/50' : ''}`}>
-          <div className="flex flex-col items-center mb-14 text-center">
-            <div className="w-16 h-16 bg-gradient-to-tr from-indigo-600 to-blue-400 rounded-2xl flex items-center justify-center shadow-lg mb-8">
-              <ShieldCheck className="w-8 h-8 text-white" />
-            </div>
-            <h1 className="text-3xl font-black text-white tracking-tight leading-none mb-1">My Card Hub</h1>
-            <p className="text-[9px] font-bold text-indigo-400 tracking-[0.4em] uppercase">Vault Terminal</p>
-          </div>
-          <div className="flex gap-5 justify-center mb-12">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className={`w-2.5 h-2.5 rounded-full transition-all duration-500 border ${pin.length > i ? 'bg-white border-white scale-150 shadow-[0_0_20px_rgba(255,255,255,0.7)]' : 'bg-transparent border-white/20'}`} />
-            ))}
-          </div>
-          <div className="grid grid-cols-3 gap-5 max-w-[280px] mx-auto">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-              <button key={num} onClick={() => addPinNumber(String(num))} className="w-16 h-16 rounded-[1.5rem] bg-white/5 border border-white/10 flex items-center justify-center text-2xl font-bold text-white hover:bg-white/10 active:scale-90 transition-all backdrop-blur-md">{num}</button>
-            ))}
-            <div className="w-16 h-16"></div>
-            <button onClick={() => addPinNumber('0')} className="w-16 h-16 rounded-[1.5rem] bg-white/5 border border-white/10 flex items-center justify-center text-2xl font-bold text-white hover:bg-white/10 active:scale-90 transition-all backdrop-blur-md">0</button>
-            <button onClick={() => setPin(pin.slice(0, -1))} className="w-16 h-16 rounded-[1.5rem] bg-white/5 flex items-center justify-center text-gray-400 hover:text-white active:scale-90 transition-all"><Delete size={24} /></button>
-          </div>
-        </div>
-        <style dangerouslySetInnerHTML={{__html: `@keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } } .animate-shake { animation: shake 0.4s ease-in-out; }`}} />
+      <div className="min-h-screen bg-[#05070a] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
       </div>
     );
   }
+
+  if (!user) {
+    return <Login />;
+  }
+
+  if (!appScriptUrl) {
+    return <SetupWizard user={user} onComplete={(url) => setAppScriptUrl(url)} />;
+  }
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (e) {
+      console.error("Error signing out:", e);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#05070a] text-gray-100 p-4 md:p-10 font-sans selection:bg-indigo-500/30 overflow-x-hidden">
@@ -376,7 +367,7 @@ export default function App() {
               <ShieldCheck className="text-white w-7 h-7" />
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight leading-none uppercase">My Card Hub</h1>
+              <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight leading-none uppercase">ccdeck</h1>
               <p className="text-gray-500 font-bold tracking-[0.2em] mt-2 uppercase text-[9px]">Financial Control v2.0</p>
             </div>
           </div>
@@ -386,6 +377,9 @@ export default function App() {
             </button>
             <button onClick={() => window.location.reload()} disabled={isLoading} className="flex-1 md:flex-none bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-7 py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-2 shadow-lg text-[10px] uppercase tracking-widest">
                 {isLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCcw size={16} />} Sync
+            </button>
+            <button onClick={handleLogout} className="flex-none p-4 rounded-2xl bg-white/5 hover:bg-rose-500/10 text-gray-400 hover:text-rose-500 transition-all border border-transparent hover:border-rose-500/20">
+               <LogOut size={16} />
             </button>
           </div>
         </div>
