@@ -190,6 +190,7 @@ export default function App() {
 
         const currentSpends = {};
         const p = userPortfolio;
+        const validTransactions = [];
 
         data.transactions?.forEach((row) => {
           const cardNum = String(row.card).trim();
@@ -206,6 +207,13 @@ export default function App() {
             }
           }
 
+          // Reassign the clean parsed date and amount back so the Activity Feed can process them safely
+          row.date = isNaN(txDate.getTime()) ? new Date().toISOString() : txDate.toISOString();
+          row.amount = amount;
+          row.card = cardNum;
+
+          validTransactions.push(row);
+
           const cardInfo = p.find(c => c.last4 === cardNum);
           if (cardInfo) {
             currentSpends[cardNum] = (currentSpends[cardNum] || 0) + amount;
@@ -213,7 +221,7 @@ export default function App() {
         });
 
         setCardSpends(currentSpends);
-        setTransactions(data.transactions || []);
+        setTransactions(validTransactions);
         setIsLoading(false);
       } catch (error) {
         console.error("Fetch Live Data Error:", error);

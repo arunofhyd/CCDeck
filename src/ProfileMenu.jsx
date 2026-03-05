@@ -1,15 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { LogOut, User, Trash2, ChevronRight, Loader2 } from 'lucide-react';
+import { LogOut, User, Trash2, ChevronRight, Loader2, Download, Upload } from 'lucide-react';
 import { auth, db } from './firebase';
 import { signOut } from 'firebase/auth';
-import { doc, deleteDoc } from 'firebase/firestore';
+import { doc, deleteDoc, getDoc, setDoc } from 'firebase/firestore';
 
 export default function ProfileMenu({ user }) {
   const [isOpen, setIsOpen] = useState(false);
   const [showReset, setShowReset] = useState(false);
   const [swipeProgress, setSwipeProgress] = useState(0);
   const [isResetting, setIsResetting] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
   const menuRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -54,6 +56,64 @@ export default function ProfileMenu({ user }) {
     }
   };
 
+  const handleExportBackup = async () => {
+    try {
+      const docRef = doc(db, "users", user.uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const backup = {
+          portfolio: data.portfolio || "[]",
+          customConfig: data.customConfig || "{}"
+        };
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = \`ccdeck_backup_\${new Date().toISOString().split('T')[0]}.json\`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } else {
+        alert("No data found to export.");
+      }
+    } catch (e) {
+      console.error("Error exporting backup:", e);
+      alert("Failed to export backup.");
+    }
+  };
+
+  const handleRestoreBackup = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsRestoring(true);
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const backupData = JSON.parse(event.target.result);
+        if (backupData.portfolio !== undefined && backupData.customConfig !== undefined) {
+          await setDoc(doc(db, "users", user.uid), {
+            portfolio: backupData.portfolio,
+            customConfig: backupData.customConfig
+          }, { merge: true });
+          alert("Backup restored successfully!");
+          window.location.reload();
+        } else {
+          alert("Invalid backup file format.");
+        }
+      } catch (err) {
+        console.error("Failed to restore backup:", err);
+        alert("Failed to restore backup: Invalid JSON.");
+      } finally {
+        setIsRestoring(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -84,6 +144,31 @@ export default function ProfileMenu({ user }) {
           <div className="p-2 space-y-1">
             {!showReset ? (
               <>
+                <button
+                  onClick={handleExportBackup}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl text-left text-xs font-black text-indigo-400 hover:bg-indigo-500/10 hover:text-indigo-300 transition-colors uppercase tracking-widest"
+                >
+                  <Download size={14} />
+                  Export Backup
+                </button>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isRestoring}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl text-left text-xs font-black text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 transition-colors uppercase tracking-widest"
+                >
+                  {isRestoring ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                  Restore Backup
+                </button>
+                <input
+                  type="file"
+                  accept=".json"
+                  ref={fileInputRef}
+                  onChange={handleRestoreBackup}
+                  className="hidden"
+                />
+
+                <div className="h-px bg-white/5 my-1 mx-2"></div>
+
                 <button
                   onClick={() => setShowReset(true)}
                   className="w-full flex items-center gap-3 p-3 rounded-xl text-left text-xs font-black text-orange-500 hover:bg-orange-500/10 hover:text-orange-400 transition-colors uppercase tracking-widest"
