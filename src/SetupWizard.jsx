@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldCheck, ChevronRight, Check, Loader2, Copy, ExternalLink, Settings } from 'lucide-react';
+import { ChevronRight, Check, Loader2, Copy, ExternalLink } from 'lucide-react';
 import ProfileMenu from './ProfileMenu';
 import { db } from './firebase';
 import { doc, setDoc } from 'firebase/firestore';
@@ -256,14 +256,6 @@ function doPost(e) {
   }
 }`;
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-    } catch (e) {
-      console.error("Error signing out:", e);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#05070a] flex flex-col items-center justify-center p-4 selection:bg-indigo-500/30 relative overflow-hidden text-gray-900 dark:text-white transition-colors duration-300">
       <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_-20%,_#312e81_0%,_transparent_50%)] opacity-20 dark:opacity-40 pointer-events-none"></div>
@@ -274,9 +266,7 @@ function doPost(e) {
         </div>
 
         <div className="flex flex-col items-center mb-8 text-center">
-          <div className="w-16 h-16 bg-gradient-to-tr from-indigo-600 to-blue-400 rounded-2xl flex items-center justify-center shadow-lg mb-6">
-            <Settings className="w-8 h-8 text-white" />
-          </div>
+          <img src="/favicon.svg" alt="ccdeck logo" className="w-16 h-16 mb-4 drop-shadow-xl" />
           <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight leading-none mb-1 uppercase">Database Setup</h1>
           <p className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 tracking-[0.3em] uppercase">Connect Google Sheets</p>
         </div>
