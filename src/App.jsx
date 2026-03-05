@@ -337,11 +337,32 @@ export default function App() {
     }
   };
 
+  const formatForTxInput = (isoString) => {
+    const d = new Date(isoString);
+    if (isNaN(d)) return isoString;
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  };
+
+  const parseFromTxInput = (dateStr) => {
+    // Expected format: DD-MM-YYYY HH:mm:ss
+    const parts = dateStr.match(/(\d{2})-(\d{2})-(\d{4}) (\d{2}):(\d{2}):(\d{2})/);
+    if (parts) {
+      const [, day, month, year, hours, mins, secs] = parts;
+      const d = new Date(`${year}-${month}-${day}T${hours}:${mins}:${secs}`);
+      if (!isNaN(d)) return d.toISOString();
+    }
+    // Fallback if parsing fails or format is different
+    const fallbackD = new Date(dateStr);
+    if (!isNaN(fallbackD)) return fallbackD.toISOString();
+    return dateStr;
+  };
+
   const openEditTxModal = (tx) => {
     setEditTxForm({
       merchant: tx.merchant,
       amount: tx.amount,
-      date: tx.date,
+      date: formatForTxInput(tx.date),
       card: tx.card,
       originalDate: tx.date,
       originalMerchant: tx.merchant,
@@ -355,7 +376,7 @@ export default function App() {
     // For now, updating local state to reflect UI change.
     const updatedTransactions = transactions.map(t => {
       if (t.date === editTxForm.originalDate && t.merchant === editTxForm.originalMerchant && t.card === editTxForm.originalCard) {
-        return { ...t, merchant: editTxForm.merchant, amount: Number(editTxForm.amount), card: editTxForm.card, date: editTxForm.date };
+        return { ...t, merchant: editTxForm.merchant, amount: Number(editTxForm.amount), card: editTxForm.card, date: parseFromTxInput(editTxForm.date) };
       }
       return t;
     });
@@ -396,7 +417,7 @@ export default function App() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#05070a] flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#05070a] flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
       </div>
     );
@@ -411,7 +432,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#05070a] text-gray-100 p-4 md:p-10 font-sans selection:bg-indigo-500/30 overflow-x-hidden">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#05070a] text-gray-900 dark:text-gray-100 p-4 md:p-10 font-sans selection:bg-indigo-500/30 overflow-x-hidden transition-colors duration-300">
       <header className="max-w-7xl mx-auto mb-10 md:mb-16">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-10 text-center md:text-left">
           <div className="flex items-center gap-4 justify-center md:justify-start">
@@ -419,13 +440,13 @@ export default function App() {
               <ShieldCheck className="text-white w-7 h-7" />
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight leading-none uppercase">ccdeck</h1>
+              <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white tracking-tight leading-none uppercase">ccdeck</h1>
               <p className="text-gray-500 font-bold tracking-[0.2em] mt-2 uppercase text-[9px]">Financial Control v2.0</p>
             </div>
           </div>
           <div className="flex gap-4 items-center w-full md:w-auto">
-            <button onClick={addNewCard} className="flex-1 md:flex-none bg-white/5 hover:bg-white/10 border border-white/10 text-white px-5 py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest">
-               <Plus size={16} className="text-indigo-400" /> Add Card
+            <button onClick={addNewCard} className="flex-1 md:flex-none bg-white dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white px-5 py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest shadow-sm dark:shadow-none">
+               <Plus size={16} className="text-indigo-500 dark:text-indigo-400" /> Add Card
             </button>
             <button onClick={() => window.location.reload()} disabled={isLoading} className="flex-1 md:flex-none bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-7 py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-2 shadow-lg text-[10px] uppercase tracking-widest">
                 {isLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCcw size={16} />} Sync
@@ -435,18 +456,18 @@ export default function App() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <div className="bg-[#0c1017] border border-white/5 rounded-[2rem] p-7 md:p-8 shadow-2xl relative overflow-hidden group">
-            <div className="text-gray-500 text-[9px] font-black uppercase tracking-[0.3em] mb-3">Total Credit Line</div>
-            <div className="text-3xl md:text-4xl font-black text-white tracking-tighter">{formatInr(totalLimit)}</div>
+          <div className="bg-white dark:bg-[#0c1017] border border-gray-200 dark:border-white/5 rounded-[2rem] p-7 md:p-8 shadow-xl dark:shadow-2xl relative overflow-hidden group transition-colors">
+            <div className="text-gray-400 dark:text-gray-500 text-[9px] font-black uppercase tracking-[0.3em] mb-3">Total Credit Line</div>
+            <div className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter">{formatInr(totalLimit)}</div>
           </div>
-          <div className="bg-[#0c1017] border border-white/5 rounded-[2rem] p-7 md:p-8 shadow-2xl relative overflow-hidden group">
-            <div className="text-gray-500 text-[9px] font-black uppercase tracking-[0.3em] mb-3 flex items-center gap-2"><TrendingUp size={12} className="text-rose-500" /> Net Debt</div>
-            <div className="text-3xl md:text-4xl font-black text-white tracking-tighter">{isLoading ? '...' : formatInr(totalSpent)}</div>
-            <div className="absolute bottom-0 left-0 h-1 bg-white/5 w-full"><div className="h-full bg-gradient-to-r from-rose-500 to-indigo-500 transition-all duration-1000 shadow-[0_0_15px_rgba(244,63,94,0.4)]" style={{ width: `${(totalSpent/totalLimit)*100}%` }}></div></div>
+          <div className="bg-white dark:bg-[#0c1017] border border-gray-200 dark:border-white/5 rounded-[2rem] p-7 md:p-8 shadow-xl dark:shadow-2xl relative overflow-hidden group transition-colors">
+            <div className="text-gray-400 dark:text-gray-500 text-[9px] font-black uppercase tracking-[0.3em] mb-3 flex items-center gap-2"><TrendingUp size={12} className="text-rose-500" /> Net Debt</div>
+            <div className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter">{isLoading ? '...' : formatInr(totalSpent)}</div>
+            <div className="absolute bottom-0 left-0 h-1 bg-gray-100 dark:bg-white/5 w-full"><div className="h-full bg-gradient-to-r from-rose-500 to-indigo-500 transition-all duration-1000 shadow-[0_0_15px_rgba(244,63,94,0.4)]" style={{ width: `${(totalSpent/totalLimit)*100}%` }}></div></div>
           </div>
-          <div className="bg-[#0c1017] border border-white/5 rounded-[2rem] p-7 md:p-8 shadow-2xl relative overflow-hidden group text-center md:text-left">
-            <div className="text-gray-500 text-[9px] font-black uppercase tracking-[0.3em] mb-3 flex items-center justify-center md:justify-start gap-2"><PieChart size={12} className="text-emerald-500" /> Utilization</div>
-            <div className="text-3xl md:text-4xl font-black text-white tracking-tighter">{isLoading ? '...' : `${((totalSpent / totalLimit) * 100).toFixed(1)}%`}</div>
+          <div className="bg-white dark:bg-[#0c1017] border border-gray-200 dark:border-white/5 rounded-[2rem] p-7 md:p-8 shadow-xl dark:shadow-2xl relative overflow-hidden group text-center md:text-left transition-colors">
+            <div className="text-gray-400 dark:text-gray-500 text-[9px] font-black uppercase tracking-[0.3em] mb-3 flex items-center justify-center md:justify-start gap-2"><PieChart size={12} className="text-emerald-500" /> Utilization</div>
+            <div className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter">{isLoading ? '...' : `${((totalSpent / totalLimit) * 100).toFixed(1)}%`}</div>
           </div>
         </div>
       </header>
@@ -455,14 +476,14 @@ export default function App() {
         <div className="lg:col-span-2 space-y-8">
           
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between px-2 gap-4">
-            <h2 className="text-sm font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
+            <h2 className="text-sm font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 flex items-center gap-2">
                <ArrowUpDown size={14} /> View Order
-               <button onClick={() => setShowSortMenu(!showSortMenu)} className="ml-2 hover:text-white transition-colors">
+               <button onClick={() => setShowSortMenu(!showSortMenu)} className="ml-2 hover:text-gray-900 dark:hover:text-white transition-colors">
                  {showSortMenu ? <EyeOff size={16} /> : <Eye size={16} />}
                </button>
             </h2>
             {showSortMenu && (
-              <div className="flex flex-wrap bg-white/5 p-1 rounded-xl border border-white/5">
+              <div className="flex flex-wrap bg-white dark:bg-white/5 p-1 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm dark:shadow-none">
                 {[{ id: 'custom', label: 'Custom' }, { id: 'usage', label: 'Usage' }, { id: 'date', label: 'Date' }, { id: 'alphabetical', label: 'A-Z' }].map(mode => (
                   <button
                     key={mode.id}
@@ -476,7 +497,7 @@ export default function App() {
                         else if (mode.id === 'alphabetical') setSortDirection('asc');
                       }
                     }}
-                    className={`px-4 py-1.5 flex items-center gap-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${sortMode === mode.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
+                    className={`px-4 py-1.5 flex items-center gap-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${sortMode === mode.id ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}
                   >
                     {mode.label}
                     {sortMode === mode.id && mode.id !== 'custom' && (
@@ -499,8 +520,8 @@ export default function App() {
               const monthlyEmi = (config.emis || []).reduce((sum, e) => sum + Number(e.emiAmount || 0), 0);
 
               return (
-                <div key={card.id} draggable={sortMode === 'custom'} onDragStart={() => onDragStart(index)} onDragOver={(e) => onDragOver(e, index)} onDragEnd={onDragEnd} className={`group relative bg-[#0c1017] border border-white/5 rounded-[2.5rem] p-2 transition-all hover:border-indigo-500/20 ${draggedIdx === index ? 'opacity-20 scale-95' : 'opacity-100'} ${sortMode === 'custom' ? 'cursor-grab active:cursor-grabbing' : ''}`}>
-                  <div className={`relative h-52 rounded-[2rem] p-7 flex flex-col justify-between overflow-hidden ${card.bg} shadow-2xl`}>
+                <div key={card.id} draggable={sortMode === 'custom'} onDragStart={() => onDragStart(index)} onDragOver={(e) => onDragOver(e, index)} onDragEnd={onDragEnd} className={`group relative bg-white dark:bg-[#0c1017] border border-gray-200 dark:border-white/5 rounded-[2.5rem] p-2 transition-all hover:border-indigo-500/30 dark:hover:border-indigo-500/20 shadow-xl dark:shadow-none ${draggedIdx === index ? 'opacity-20 scale-95' : 'opacity-100'} ${sortMode === 'custom' ? 'cursor-grab active:cursor-grabbing' : ''}`}>
+                  <div className={`relative h-52 rounded-[2rem] p-7 flex flex-col justify-between overflow-hidden ${card.bg} shadow-lg dark:shadow-2xl`}>
                     <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none"></div>
                     {card.image && <div className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay" style={{ backgroundImage: `url('${card.image}')` }}></div>}
                     <div className="flex justify-between items-start z-10">
@@ -519,31 +540,31 @@ export default function App() {
                   </div>
 
                   <div className="p-7 space-y-6 relative">
-                    <button onClick={() => openEditModal(card)} className="absolute top-4 right-6 p-2.5 text-gray-600 hover:text-white hover:bg-white/5 rounded-xl transition-all z-20"><Settings size={18} /></button>
+                    <button onClick={() => openEditModal(card)} className="absolute top-4 right-6 p-2.5 text-gray-400 hover:text-gray-900 dark:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl transition-all z-20"><Settings size={18} /></button>
                     <div className="flex justify-between items-end">
                       <div>
-                        <div className="text-[8px] text-gray-500 uppercase font-black tracking-[0.2em] mb-1.5">Live Spend</div>
-                        <div className={`text-2xl font-black ${spent < 0 ? 'text-emerald-400' : 'text-white'} tracking-tighter`}>{isLoading ? '...' : formatInr(spent)}</div>
+                        <div className="text-[8px] text-gray-400 dark:text-gray-500 uppercase font-black tracking-[0.2em] mb-1.5">Live Spend</div>
+                        <div className={`text-2xl font-black ${spent < 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-gray-900 dark:text-white'} tracking-tighter`}>{isLoading ? '...' : formatInr(spent)}</div>
                       </div>
                       <div className="text-right">
-                        <div className="text-[8px] text-gray-500 uppercase font-black tracking-[0.2em] mb-1.5">Installments</div>
-                        <div className="text-lg font-black text-amber-400 tracking-tighter">{formatInr(monthlyEmi)}</div>
+                        <div className="text-[8px] text-gray-400 dark:text-gray-500 uppercase font-black tracking-[0.2em] mb-1.5">Installments</div>
+                        <div className="text-lg font-black text-amber-500 dark:text-amber-400 tracking-tighter">{formatInr(monthlyEmi)}</div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden shadow-inner flex-1">
-                        <div className={`h-full rounded-full transition-all duration-1000 ${util > 30 ? 'bg-amber-500' : 'bg-indigo-600'}`} style={{ width: `${util}%` }}></div>
+                      <div className="h-2 w-full bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden shadow-inner flex-1">
+                        <div className={`h-full rounded-full transition-all duration-1000 ${util > 30 ? 'bg-amber-500' : 'bg-indigo-500 dark:bg-indigo-600'}`} style={{ width: `${util}%` }}></div>
                       </div>
-                      <span className="text-[8px] font-black text-gray-500 tracking-widest">{util.toFixed(1)}%</span>
+                      <span className="text-[8px] font-black text-gray-400 dark:text-gray-500 tracking-widest">{util.toFixed(1)}%</span>
                     </div>
-                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100 dark:border-white/5">
                       <div className="flex flex-col gap-1">
-                        <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest">Statement</span>
-                        <div className="flex items-center gap-1.5 text-[10px] font-black text-white"><Calendar size={10} className="text-indigo-400" /> {dates.stmt}</div>
+                        <span className="text-[8px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Statement</span>
+                        <div className="flex items-center gap-1.5 text-[10px] font-black text-gray-900 dark:text-white"><Calendar size={10} className="text-indigo-500 dark:text-indigo-400" /> {dates.stmt}</div>
                       </div>
                       <div className="flex flex-col gap-1 text-right">
-                        <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest">Payment Due</span>
-                        <div className={`flex items-center justify-end gap-1.5 text-[10px] font-black ${dates.daysToDue <= 7 ? 'text-rose-500' : 'text-white'}`}>{dates.due} <Clock size={10} /></div>
+                        <span className="text-[8px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Payment Due</span>
+                        <div className={`flex items-center justify-end gap-1.5 text-[10px] font-black ${dates.daysToDue <= 7 ? 'text-rose-500' : 'text-gray-900 dark:text-white'}`}>{dates.due} <Clock size={10} /></div>
                       </div>
                     </div>
                   </div>
@@ -554,39 +575,39 @@ export default function App() {
         </div>
 
         <div className="space-y-10">
-          <div className="bg-[#0c1017] border border-white/5 rounded-[2.5rem] p-8 shadow-2xl">
-            <h2 className="text-xl font-black flex items-center gap-3 mb-8 uppercase tracking-tighter text-white"><RefreshCcw size={22} className="text-indigo-500" /> Activity Feed</h2>
+          <div className="bg-white dark:bg-[#0c1017] border border-gray-200 dark:border-white/5 rounded-[2.5rem] p-8 shadow-xl dark:shadow-2xl transition-colors">
+            <h2 className="text-xl font-black flex items-center gap-3 mb-8 uppercase tracking-tighter text-gray-900 dark:text-white"><RefreshCcw size={22} className="text-indigo-500" /> Activity Feed</h2>
             {isLoading ? (
-              <div className="flex justify-center items-center py-20"><Loader2 size={32} className="text-indigo-600 animate-spin" /></div>
+              <div className="flex justify-center items-center py-20"><Loader2 size={32} className="text-indigo-500 dark:text-indigo-600 animate-spin" /></div>
             ) : (
               <div className="space-y-8 max-h-[700px] overflow-y-auto pr-2 custom-scrollbar">
                 {Object.entries(groupedTransactions).map(([monthYear, monthTxs], groupIdx) => (
                   <div key={groupIdx} className="space-y-4">
-                    <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] sticky top-0 bg-[#0c1017]/90 backdrop-blur-md py-2 z-10 border-b border-white/5">
+                    <h3 className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] sticky top-0 bg-white/90 dark:bg-[#0c1017]/90 backdrop-blur-md py-2 z-10 border-b border-gray-100 dark:border-white/5 transition-colors">
                       {monthYear}
                     </h3>
                     {monthTxs.map((tx, idx) => {
                       const cardInfo = portfolio.find(c => c.last4 === tx.card);
                       const isCredit = tx.amount < 0;
                       return (
-                        <div key={idx} onClick={() => openEditTxModal(tx)} className="flex justify-between items-center p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 group cursor-pointer transition-colors shadow-sm hover:shadow-md">
+                        <div key={idx} onClick={() => openEditTxModal(tx)} className="flex justify-between items-center p-5 rounded-2xl bg-gray-50 hover:bg-gray-100 dark:bg-white/[0.02] dark:hover:bg-white/[0.05] border border-gray-100 dark:border-white/5 group cursor-pointer transition-colors shadow-sm">
                           <div className="flex gap-4 items-center overflow-hidden flex-1">
-                            <div className={`w-12 h-12 shrink-0 rounded-[1rem] flex items-center justify-center ${cardInfo?.bg || 'bg-gray-800'} text-white text-[10px] font-black shadow-xl relative overflow-hidden border border-white/10`}>
+                            <div className={`w-12 h-12 shrink-0 rounded-[1rem] flex items-center justify-center ${cardInfo?.bg || 'bg-gray-800'} text-white text-[10px] font-black shadow-lg dark:shadow-xl relative overflow-hidden border border-black/10 dark:border-white/10`}>
                               <span className="relative z-10">{tx.card}</span>
                             </div>
                             <div className="overflow-hidden flex-1">
-                              <div className="font-black text-white text-sm truncate group-hover:text-indigo-400 transition-colors uppercase tracking-tight">{tx.merchant}</div>
-                              <div className="text-[9px] font-bold text-gray-500 uppercase mt-1 tracking-[0.1em]">{tx.formattedDate}</div>
+                              <div className="font-black text-gray-900 dark:text-white text-sm truncate group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors uppercase tracking-tight">{tx.merchant}</div>
+                              <div className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase mt-1 tracking-[0.1em]">{tx.formattedDate}</div>
                             </div>
                           </div>
-                          <div className={`font-black text-sm shrink-0 ml-4 ${isCredit ? 'text-emerald-400' : 'text-rose-500'} tracking-tighter`}>{isCredit ? '+' : '-'}{formatInr(Math.abs(tx.amount))}</div>
+                          <div className={`font-black text-sm shrink-0 ml-4 ${isCredit ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500'} tracking-tighter`}>{isCredit ? '+' : '-'}{formatInr(Math.abs(tx.amount))}</div>
                         </div>
                       );
                     })}
                   </div>
                 ))}
                 {Object.keys(groupedTransactions).length === 0 && (
-                  <div className="text-center py-10 text-gray-500 text-xs font-black uppercase tracking-widest">No activity found</div>
+                  <div className="text-center py-10 text-gray-400 dark:text-gray-500 text-xs font-black uppercase tracking-widest">No activity found</div>
                 )}
               </div>
             )}
@@ -599,37 +620,37 @@ export default function App() {
           <div className="bg-[#0c1017] border border-white/10 rounded-[3rem] w-full max-w-6xl shadow-2xl my-auto flex flex-col md:flex-row transition-all h-[90vh]">
 
             {/* Left Side: Settings */}
-            <div className="flex flex-col w-full md:w-1/2 border-b md:border-b-0 md:border-r border-white/5 bg-[#0c1017] z-10">
-              <div className="p-6 md:p-8 border-b border-white/5 flex justify-between items-center bg-[#0c1017] shrink-0 rounded-tl-[3rem] md:rounded-bl-[3rem]">
+            <div className="flex flex-col w-full md:w-1/2 border-b md:border-b-0 md:border-r border-gray-200 dark:border-white/5 bg-white dark:bg-[#0c1017] z-10 transition-colors">
+              <div className="p-6 md:p-8 border-b border-gray-200 dark:border-white/5 flex justify-between items-center shrink-0 rounded-tl-[3rem] md:rounded-bl-[3rem]">
                 <div>
-                  <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Card Config</h3>
+                  <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Card Config</h3>
                   <p className="text-xs font-black text-indigo-500 uppercase mt-1 tracking-widest leading-none">Settings & Limits</p>
                 </div>
                 {/* Mobile close button only */}
-                <button onClick={() => setEditingCard(null)} className="md:hidden p-3 bg-white/5 rounded-xl text-gray-500 hover:text-white transition-all"><X size={20}/></button>
+                <button onClick={() => setEditingCard(null)} className="md:hidden p-3 bg-gray-100 dark:bg-white/5 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all"><X size={20}/></button>
               </div>
 
               <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar flex-1 space-y-10">
                 <div className="grid grid-cols-1 gap-6">
-                  <div><label className="block text-[11px] font-black text-gray-500 uppercase mb-3 tracking-widest">Descriptor</label><input value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-4 text-white font-black outline-none uppercase text-sm" /></div>
+                  <div><label className="block text-[11px] font-black text-gray-500 uppercase mb-3 tracking-widest">Descriptor</label><input value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value})} className="w-full bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/5 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-black outline-none uppercase text-sm" /></div>
                   <div className="grid grid-cols-2 gap-6">
-                    <div><label className="block text-[11px] font-black text-gray-500 uppercase mb-3 tracking-widest">Institution</label><input value={editForm.bank} onChange={(e) => setEditForm({...editForm, bank: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-4 text-white font-black outline-none uppercase text-sm" /></div>
-                    <div><label className="block text-[11px] font-black text-gray-500 uppercase mb-3 tracking-widest">Ending In</label><input value={editForm.last4} onChange={(e) => setEditForm({...editForm, last4: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-4 text-white font-black outline-none text-sm" maxLength={4} /></div>
+                    <div><label className="block text-[11px] font-black text-gray-500 uppercase mb-3 tracking-widest">Institution</label><input value={editForm.bank} onChange={(e) => setEditForm({...editForm, bank: e.target.value})} className="w-full bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/5 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-black outline-none uppercase text-sm" /></div>
+                    <div><label className="block text-[11px] font-black text-gray-500 uppercase mb-3 tracking-widest">Ending In</label><input value={editForm.last4} onChange={(e) => setEditForm({...editForm, last4: e.target.value})} className="w-full bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/5 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-black outline-none text-sm" maxLength={4} /></div>
                   </div>
-                  <div><label className="block text-[11px] font-black text-gray-500 uppercase mb-3 tracking-widest">Network Logic</label><select value={editForm.network} onChange={(e) => setEditForm({...editForm, network: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-4 text-white font-black outline-none uppercase text-sm"><option value="visa">Visa</option><option value="mastercard">Mastercard</option><option value="amex">Amex</option><option value="rupay">RuPay</option></select></div>
+                  <div><label className="block text-[11px] font-black text-gray-500 uppercase mb-3 tracking-widest">Network Logic</label><select value={editForm.network} onChange={(e) => setEditForm({...editForm, network: e.target.value})} className="w-full bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/5 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-black outline-none uppercase text-sm"><option value="visa">Visa</option><option value="mastercard">Mastercard</option><option value="amex">Amex</option><option value="rupay">RuPay</option></select></div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6 pt-6 border-t border-white/5">
-                  <div><label className="block text-[11px] font-black text-gray-500 uppercase mb-3 tracking-widest">Stmt Date</label><input type="number" min="1" max="31" value={editForm.stmtDate} onChange={(e) => setEditForm({...editForm, stmtDate: Number(e.target.value)})} className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-4 text-white font-black text-center text-sm" /></div>
-                  <div><label className="block text-[11px] font-black text-gray-500 uppercase mb-3 tracking-widest">Due Date</label><input type="number" min="1" max="31" value={editForm.dueDate} onChange={(e) => setEditForm({...editForm, dueDate: Number(e.target.value)})} className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-4 text-white font-black text-center text-sm" /></div>
+                <div className="grid grid-cols-2 gap-6 pt-6 border-t border-gray-200 dark:border-white/5">
+                  <div><label className="block text-[11px] font-black text-gray-500 uppercase mb-3 tracking-widest">Stmt Date</label><input type="number" min="1" max="31" value={editForm.stmtDate} onChange={(e) => setEditForm({...editForm, stmtDate: Number(e.target.value)})} className="w-full bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/5 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-black text-center text-sm" /></div>
+                  <div><label className="block text-[11px] font-black text-gray-500 uppercase mb-3 tracking-widest">Due Date</label><input type="number" min="1" max="31" value={editForm.dueDate} onChange={(e) => setEditForm({...editForm, dueDate: Number(e.target.value)})} className="w-full bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/5 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-black text-center text-sm" /></div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6 pt-6 border-t border-white/5">
-                  <div><label className="block text-[11px] font-black text-gray-500 uppercase mb-3 tracking-widest">Credit Line</label><input type="number" value={editForm.limit} onChange={(e) => setEditForm({...editForm, limit: Number(e.target.value)})} className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-4 text-white font-black outline-none text-sm" /></div>
-                  <div><label className="block text-[11px] font-black text-gray-500 uppercase mb-3 tracking-widest">Live Spend</label><input type="number" value={editForm.balance} onChange={(e) => setEditForm({...editForm, balance: Number(e.target.value)})} className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-4 text-white font-black outline-none text-sm" /></div>
+                <div className="grid grid-cols-2 gap-6 pt-6 border-t border-gray-200 dark:border-white/5">
+                  <div><label className="block text-[11px] font-black text-gray-500 uppercase mb-3 tracking-widest">Credit Line</label><input type="number" value={editForm.limit} onChange={(e) => setEditForm({...editForm, limit: Number(e.target.value)})} className="w-full bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/5 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-black outline-none text-sm" /></div>
+                  <div><label className="block text-[11px] font-black text-gray-500 uppercase mb-3 tracking-widest">Live Spend</label><input type="number" value={editForm.balance} onChange={(e) => setEditForm({...editForm, balance: Number(e.target.value)})} className="w-full bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/5 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-black outline-none text-sm" /></div>
                 </div>
 
-                <div className="space-y-6 pt-6 border-t border-white/5">
+                <div className="space-y-6 pt-6 border-t border-gray-200 dark:border-white/5">
                   <div className="flex justify-between items-center"><label className="block text-[11px] font-black text-gray-500 uppercase tracking-widest">EMI Inventory</label><button onClick={() => setEditForm({...editForm, emis: [...editForm.emis, { id: Date.now(), merchant: '', emiAmount: 0, totalLoanAmount: 0, interestRate: 0, tenureRemaining: 12, firstPaymentMonth: '', totalTenure: 12 }]})} className="px-5 py-3 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg"><Plus size={14}/> New Loan</button></div>
                   <div className="space-y-6">
                     {editForm.emis.map((emi) => {
@@ -646,26 +667,26 @@ export default function App() {
                       }
 
                       return (
-                        <div key={emi.id} className="p-6 bg-black/40 rounded-[2rem] border border-white/5 space-y-6 relative">
+                        <div key={emi.id} className="p-6 bg-gray-50 dark:bg-black/40 rounded-[2rem] border border-gray-200 dark:border-white/5 space-y-6 relative">
                           <button onClick={() => setEditForm({ ...editForm, emis: editForm.emis.filter(e => e.id !== emi.id) })} className="absolute top-5 right-5 p-2 bg-rose-500/10 rounded-xl text-rose-500 hover:bg-rose-500 hover:text-white transition-colors"><Trash2 size={16}/></button>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div className="col-span-1 md:col-span-2"><label className="text-[10px] font-black text-gray-600 uppercase mb-2 block tracking-widest">Purchase</label><input placeholder="e.g. iPhone 15 Pro" value={emi.merchant} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, merchant: e.target.value} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-black text-white outline-none" /></div>
+                            <div className="col-span-1 md:col-span-2"><label className="text-[10px] font-black text-gray-600 uppercase mb-2 block tracking-widest">Purchase</label><input placeholder="e.g. iPhone 15 Pro" value={emi.merchant} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, merchant: e.target.value} : item)})} className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm font-black text-gray-900 dark:text-white outline-none" /></div>
                             <div className="grid grid-cols-2 gap-4">
-                              <div><label className="text-[10px] font-black text-gray-600 uppercase mb-2 block tracking-widest">Monthly EMI</label><input type="number" value={emi.emiAmount} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, emiAmount: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-black text-white outline-none" /></div>
-                              <div><label className="text-[10px] font-black text-gray-600 uppercase mb-2 block tracking-widest">Total Amount</label><input type="number" value={emi.totalLoanAmount} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, totalLoanAmount: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-black text-white outline-none" /></div>
+                              <div><label className="text-[10px] font-black text-gray-600 uppercase mb-2 block tracking-widest">Monthly EMI</label><input type="number" value={emi.emiAmount} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, emiAmount: Number(e.target.value)} : item)})} className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm font-black text-gray-900 dark:text-white outline-none" /></div>
+                              <div><label className="text-[10px] font-black text-gray-600 uppercase mb-2 block tracking-widest">Total Amount</label><input type="number" value={emi.totalLoanAmount} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, totalLoanAmount: Number(e.target.value)} : item)})} className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm font-black text-gray-900 dark:text-white outline-none" /></div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
-                              <div><label className="text-[10px] font-black text-gray-600 uppercase mb-2 block tracking-widest">First Pay Mth</label><input type="month" value={emi.firstPaymentMonth || ''} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, firstPaymentMonth: e.target.value} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-black text-white outline-none" style={{ colorScheme: 'dark' }} /></div>
-                              <div><label className="text-[10px] font-black text-gray-600 uppercase mb-2 block tracking-widest">Total Months</label><input type="number" value={emi.totalTenure || emi.tenureRemaining || 12} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, totalTenure: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-black text-white outline-none" /></div>
+                              <div><label className="text-[10px] font-black text-gray-600 uppercase mb-2 block tracking-widest">First Pay Mth</label><input type="month" value={emi.firstPaymentMonth || ''} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, firstPaymentMonth: e.target.value} : item)})} className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm font-black text-gray-900 dark:text-white outline-none dark:[color-scheme:dark]" /></div>
+                              <div><label className="text-[10px] font-black text-gray-600 uppercase mb-2 block tracking-widest">Total Months</label><input type="number" value={emi.totalTenure || emi.tenureRemaining || 12} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, totalTenure: Number(e.target.value)} : item)})} className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm font-black text-gray-900 dark:text-white outline-none" /></div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
-                              <div><label className="text-[10px] font-black text-gray-600 uppercase mb-2 block tracking-widest">Rate %</label><input type="number" value={emi.interestRate} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, interestRate: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-black text-white outline-none" /></div>
-                              <div><label className="text-[10px] font-black text-gray-600 uppercase mb-2 block tracking-widest">Months Left</label><input type="number" value={emi.tenureRemaining} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, tenureRemaining: Number(e.target.value)} : item)})} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-black text-white outline-none" /></div>
+                              <div><label className="text-[10px] font-black text-gray-600 uppercase mb-2 block tracking-widest">Rate %</label><input type="number" value={emi.interestRate} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, interestRate: Number(e.target.value)} : item)})} className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm font-black text-gray-900 dark:text-white outline-none" /></div>
+                              <div><label className="text-[10px] font-black text-gray-600 uppercase mb-2 block tracking-widest">Months Left</label><input type="number" value={emi.tenureRemaining} onChange={(e) => setEditForm({...editForm, emis: editForm.emis.map(item => item.id === emi.id ? {...item, tenureRemaining: Number(e.target.value)} : item)})} className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm font-black text-gray-900 dark:text-white outline-none" /></div>
                             </div>
                           </div>
                           {endText && (
-                            <div className="mt-5 pt-5 border-t border-white/5 text-right">
-                               <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Active Until: {endText}</span>
+                            <div className="mt-5 pt-5 border-t border-gray-200 dark:border-white/5 text-right">
+                               <span className="text-[10px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest">Active Until: {endText}</span>
                             </div>
                           )}
                         </div>
@@ -675,35 +696,35 @@ export default function App() {
                 </div>
 
                 <div className="pt-6">
-                  <button onClick={() => deleteCard(editingCard.id)} className="w-full py-5 bg-rose-500/5 hover:bg-rose-500/10 text-rose-500 rounded-2xl text-[11px] font-black uppercase tracking-[0.4em] transition-all flex items-center justify-center gap-3 border border-rose-500/10"><Trash2 size={16} /> Delete Card</button>
+                  <button onClick={() => deleteCard(editingCard.id)} className="w-full py-5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-500/5 dark:hover:bg-rose-500/10 text-rose-500 rounded-2xl text-[11px] font-black uppercase tracking-[0.4em] transition-all flex items-center justify-center gap-3 border border-rose-200 dark:border-rose-500/10"><Trash2 size={16} /> Delete Card</button>
                 </div>
               </div>
 
-              <div className="p-6 md:p-8 bg-[#0a0d13] border-t border-white/5 flex gap-4 shrink-0 rounded-bl-[3rem] md:rounded-bl-none md:rounded-br-none">
-                <button disabled={isSaving} onClick={() => setEditingCard(null)} className="flex-1 py-5 rounded-2xl font-black text-gray-500 hover:text-white hover:bg-white/5 transition-all uppercase text-[11px] tracking-widest">Discard</button>
+              <div className="p-6 md:p-8 bg-gray-50 dark:bg-[#0a0d13] border-t border-gray-200 dark:border-white/5 flex gap-4 shrink-0 rounded-bl-[3rem] md:rounded-bl-none md:rounded-br-none transition-colors">
+                <button disabled={isSaving} onClick={() => setEditingCard(null)} className="flex-1 py-5 rounded-2xl font-black text-gray-500 hover:text-gray-900 hover:bg-gray-200 dark:hover:text-white dark:hover:bg-white/5 transition-all uppercase text-[11px] tracking-widest">Discard</button>
                 <button disabled={isSaving} onClick={saveEdit} className="flex-[2] flex items-center justify-center gap-2 py-5 rounded-2xl font-black bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-lg uppercase text-[11px] tracking-widest">{isSaving ? <Loader2 size={16} className="animate-spin" /> : 'Synchronize Settings'}</button>
               </div>
             </div>
 
             {/* Right Side: Card Activity */}
-            <div className="flex flex-col w-full md:w-1/2 bg-[#05070a]/50 relative z-0">
-              <div className="p-6 md:p-8 border-b border-white/5 flex justify-between items-center shrink-0">
+            <div className="flex flex-col w-full md:w-1/2 bg-gray-100 dark:bg-[#05070a]/50 relative z-0 transition-colors">
+              <div className="p-6 md:p-8 border-b border-gray-200 dark:border-white/5 flex justify-between items-center shrink-0">
                 <div>
-                  <h3 className="text-2xl font-black text-white uppercase tracking-tighter flex items-center gap-3"><RefreshCcw size={24} className="text-indigo-500"/> Transactions</h3>
+                  <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter flex items-center gap-3"><RefreshCcw size={24} className="text-indigo-500"/> Transactions</h3>
                   <p className="text-xs font-black text-gray-500 uppercase mt-1 tracking-widest leading-none">Ending in {editingCard.last4}</p>
                 </div>
                 <div className="flex items-center gap-4">
                   <select
                     value={cardTxFilter}
                     onChange={(e) => setCardTxFilter(e.target.value)}
-                    className="bg-white/5 border border-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-xl px-4 py-3 outline-none"
+                    className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white text-[10px] font-black uppercase tracking-widest rounded-xl px-4 py-3 outline-none"
                   >
                     <option value="year">This Year</option>
-                    <option value="month">This Month</option>
+                    <option value="statement">Current Statement</option>
                     <option value="all">All Time</option>
                   </select>
                   {/* Desktop close button */}
-                  <button onClick={() => setEditingCard(null)} className="hidden md:block p-3 bg-white/5 rounded-xl text-gray-500 hover:text-white transition-all"><X size={20}/></button>
+                  <button onClick={() => setEditingCard(null)} className="hidden md:block p-3 bg-gray-200 dark:bg-white/5 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all"><X size={20}/></button>
                 </div>
               </div>
 
@@ -716,15 +737,27 @@ export default function App() {
                     const now = new Date();
                     if (cardTxFilter === 'year') {
                        filteredTxs = cardTxs.filter(tx => new Date(tx.date).getFullYear() === now.getFullYear());
-                    } else if (cardTxFilter === 'month') {
+                    } else if (cardTxFilter === 'statement') {
+                       // Calculate statement start and end dates
+                       const stmtDay = editingCard.stmtDate || 1;
+                       let cycleStart = new Date(now.getFullYear(), now.getMonth(), stmtDay);
+                       if (now.getDate() < stmtDay) {
+                         cycleStart.setMonth(cycleStart.getMonth() - 1);
+                       }
+                       cycleStart.setHours(0, 0, 0, 0);
+
+                       let cycleEnd = new Date(cycleStart);
+                       cycleEnd.setMonth(cycleEnd.getMonth() + 1);
+                       cycleEnd.setHours(23, 59, 59, 999);
+
                        filteredTxs = cardTxs.filter(tx => {
                          const d = new Date(tx.date);
-                         return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                         return d >= cycleStart && d < cycleEnd;
                        });
                     }
 
                     if (filteredTxs.length === 0) {
-                      return <div className="text-center py-20 text-gray-500 text-sm font-black uppercase tracking-widest">No matching transactions found</div>;
+                      return <div className="text-center py-20 text-gray-400 dark:text-gray-500 text-sm font-black uppercase tracking-widest">No matching transactions found</div>;
                     }
 
                     return filteredTxs.map((tx, idx) => {
@@ -733,14 +766,14 @@ export default function App() {
                       const formattedDate = !isNaN(d) ? d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Unknown Date';
 
                       return (
-                        <div key={idx} onClick={() => {setEditingTransaction(tx); setEditingCard(null);}} className="flex justify-between items-center p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 group cursor-pointer transition-colors shadow-sm">
+                        <div key={idx} onClick={() => {setEditingTransaction(tx); setEditingCard(null);}} className="flex justify-between items-center p-5 rounded-2xl bg-white dark:bg-white/[0.02] hover:bg-gray-50 dark:hover:bg-white/[0.05] border border-gray-200 dark:border-white/5 group cursor-pointer transition-colors shadow-sm">
                           <div className="flex gap-4 items-center overflow-hidden flex-1">
                             <div className="overflow-hidden flex-1">
-                              <div className="font-black text-white text-base truncate group-hover:text-indigo-400 transition-colors uppercase tracking-tight">{tx.merchant}</div>
-                              <div className="text-[10px] font-bold text-gray-500 uppercase mt-1 tracking-widest">{formattedDate}</div>
+                              <div className="font-black text-gray-900 dark:text-white text-base truncate group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors uppercase tracking-tight">{tx.merchant}</div>
+                              <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mt-1 tracking-widest">{formattedDate}</div>
                             </div>
                           </div>
-                          <div className={`font-black text-lg shrink-0 ml-4 ${isCredit ? 'text-emerald-400' : 'text-rose-500'} tracking-tighter`}>{isCredit ? '+' : '-'}{formatInr(Math.abs(tx.amount))}</div>
+                          <div className={`font-black text-lg shrink-0 ml-4 ${isCredit ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500'} tracking-tighter`}>{isCredit ? '+' : '-'}{formatInr(Math.abs(tx.amount))}</div>
                         </div>
                       );
                     });
@@ -754,41 +787,40 @@ export default function App() {
       )}
 
       {editingTransaction && (
-        <div className="fixed inset-0 bg-black/95 backdrop-blur-2xl z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-[#0c1017] border border-white/10 rounded-[3rem] w-full max-w-lg shadow-2xl my-auto flex flex-col transition-all">
-            <div className="p-8 border-b border-white/5 flex justify-between items-center">
-              <div><h3 className="text-xl font-black text-white uppercase tracking-tighter">Edit Transaction</h3><p className="text-[9px] font-black text-indigo-500 uppercase mt-1 tracking-widest leading-none">Manual Override</p></div>
-              <button onClick={() => setEditingTransaction(null)} className="p-3 bg-white/5 rounded-xl text-gray-500 hover:text-white transition-all"><X size={20}/></button>
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/95 backdrop-blur-2xl z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-[#0c1017] border border-gray-200 dark:border-white/10 rounded-[3rem] w-full max-w-lg shadow-2xl my-auto flex flex-col transition-all">
+            <div className="p-8 border-b border-gray-100 dark:border-white/5 flex justify-between items-center">
+              <div><h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Edit Transaction</h3><p className="text-[9px] font-black text-indigo-500 uppercase mt-1 tracking-widest leading-none">Manual Override</p></div>
+              <button onClick={() => setEditingTransaction(null)} className="p-3 bg-gray-100 dark:bg-white/5 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all"><X size={20}/></button>
             </div>
             <div className="p-8 space-y-6">
               <div>
-                <label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Merchant / Description</label>
-                <input value={editTxForm.merchant} onChange={(e) => setEditTxForm({...editTxForm, merchant: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none uppercase text-xs" />
+                <label className="block text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase mb-3 tracking-widest">Merchant / Description</label>
+                <input value={editTxForm.merchant} onChange={(e) => setEditTxForm({...editTxForm, merchant: e.target.value})} className="w-full bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/5 rounded-xl px-5 py-4 text-gray-900 dark:text-white font-black outline-none uppercase text-xs" />
               </div>
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Amount</label>
-                  <input type="number" value={editTxForm.amount} onChange={(e) => setEditTxForm({...editTxForm, amount: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none text-xs" />
+                  <label className="block text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase mb-3 tracking-widest">Amount</label>
+                  <input type="number" value={editTxForm.amount} onChange={(e) => setEditTxForm({...editTxForm, amount: e.target.value})} className="w-full bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/5 rounded-xl px-5 py-4 text-gray-900 dark:text-white font-black outline-none text-xs" />
                 </div>
                 <div>
-                  <label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Card Ending</label>
-                  <input value={editTxForm.card} onChange={(e) => setEditTxForm({...editTxForm, card: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none text-xs" maxLength={4} />
+                  <label className="block text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase mb-3 tracking-widest">Card Ending</label>
+                  <input value={editTxForm.card} onChange={(e) => setEditTxForm({...editTxForm, card: e.target.value})} className="w-full bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/5 rounded-xl px-5 py-4 text-gray-900 dark:text-white font-black outline-none text-xs" maxLength={4} />
                 </div>
               </div>
               <div>
-                <label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Date / Time string</label>
-                <input value={editTxForm.date} onChange={(e) => setEditTxForm({...editTxForm, date: e.target.value})} className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-5 py-4 text-white font-black outline-none text-xs" />
+                <label className="block text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase mb-3 tracking-widest">Date / Time string</label>
+                <input value={editTxForm.date} onChange={(e) => setEditTxForm({...editTxForm, date: e.target.value})} className="w-full bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/5 rounded-xl px-5 py-4 text-gray-900 dark:text-white font-black outline-none text-xs" />
               </div>
             </div>
-            <div className="p-8 bg-black/50 border-t border-white/5 flex gap-4">
-              <button onClick={() => setEditingTransaction(null)} className="flex-1 py-4 rounded-2xl font-black text-gray-500 hover:text-white transition-all uppercase text-[9px] tracking-widest">Discard</button>
+            <div className="p-8 bg-gray-50 dark:bg-black/50 border-t border-gray-200 dark:border-white/5 flex gap-4">
+              <button onClick={() => setEditingTransaction(null)} className="flex-1 py-4 rounded-2xl font-black text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all uppercase text-[9px] tracking-widest">Discard</button>
               <button onClick={saveTxEdit} className="flex-[2] py-4 rounded-2xl font-black bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-lg uppercase text-[9px] tracking-widest">Update Locally</button>
             </div>
           </div>
         </div>
       )}
 
-      <style dangerouslySetInnerHTML={{__html: `.custom-scrollbar::-webkit-scrollbar { width: 3px; } .custom-scrollbar::-webkit-scrollbar-track { background: transparent; } .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(255,255,255,0.05); border-radius: 10px; }`}} />
     </div>
   );
 }

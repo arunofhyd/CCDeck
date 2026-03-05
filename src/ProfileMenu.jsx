@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { LogOut, User, Trash2, ChevronRight, Loader2, Download, Upload } from 'lucide-react';
+import { LogOut, User, Trash2, ChevronRight, Loader2, Download, Upload, Moon, Sun } from 'lucide-react';
 import { auth, db } from './firebase';
 import { signOut } from 'firebase/auth';
 import { doc, deleteDoc, getDoc, setDoc } from 'firebase/firestore';
@@ -10,10 +10,17 @@ export default function ProfileMenu({ user }) {
   const [swipeProgress, setSwipeProgress] = useState(0);
   const [isResetting, setIsResetting] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [isDark, setIsDark] = useState(true);
   const menuRef = useRef(null);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
+    if (document.documentElement.classList.contains('dark')) {
+      setIsDark(true);
+    } else {
+      setIsDark(false);
+    }
+
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setIsOpen(false);
@@ -114,6 +121,18 @@ export default function ProfileMenu({ user }) {
     reader.readAsText(file);
   };
 
+  const toggleTheme = () => {
+    if (isDark) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('ccdeck_theme', 'light');
+      setIsDark(false);
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('ccdeck_theme', 'dark');
+      setIsDark(true);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -128,17 +147,26 @@ export default function ProfileMenu({ user }) {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-center p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all border border-transparent hover:border-white/10"
+        className="flex items-center justify-center p-3 rounded-2xl bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-all border border-transparent dark:hover:border-white/10"
         title="Profile"
       >
         <User size={18} />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-3 w-64 rounded-2xl bg-[#0c1017] border border-white/10 shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
-          <div className="p-4 border-b border-white/5">
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Signed in as</p>
-            <p className="text-xs font-black text-white truncate">{user.email || 'Anonymous'}</p>
+        <div className="absolute right-0 mt-3 w-64 rounded-2xl bg-white dark:bg-[#0c1017] border border-gray-200 dark:border-white/10 shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
+          <div className="p-4 border-b border-gray-100 dark:border-white/5 flex justify-between items-start">
+            <div className="overflow-hidden pr-4">
+              <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Signed in as</p>
+              <p className="text-xs font-black text-gray-900 dark:text-white truncate">{user.email || 'Anonymous'}</p>
+            </div>
+            <button
+              onClick={toggleTheme}
+              className="p-2 shrink-0 bg-gray-100 dark:bg-white/5 rounded-lg text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+              title="Toggle Theme"
+            >
+              {isDark ? <Sun size={14} /> : <Moon size={14} />}
+            </button>
           </div>
 
           <div className="p-2 space-y-1">
@@ -167,7 +195,7 @@ export default function ProfileMenu({ user }) {
                   className="hidden"
                 />
 
-                <div className="h-px bg-white/5 my-1 mx-2"></div>
+                <div className="h-px bg-gray-100 dark:bg-white/5 my-1 mx-2"></div>
 
                 <button
                   onClick={() => setShowReset(true)}
@@ -186,11 +214,11 @@ export default function ProfileMenu({ user }) {
               </>
             ) : (
               <div className="p-2 space-y-4">
-                <p className="text-[9px] font-bold text-orange-400 uppercase tracking-widest text-center leading-relaxed">
+                <p className="text-[9px] font-bold text-orange-500 dark:text-orange-400 uppercase tracking-widest text-center leading-relaxed">
                   Warning: This clears your ccdeck setup completely.
                 </p>
 
-                <div className="relative h-12 bg-white/5 rounded-xl border border-white/10 overflow-hidden group">
+                <div className="relative h-12 bg-gray-100 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 overflow-hidden group">
                   {/* The Track Background filling up */}
                   <div
                     className="absolute top-0 left-0 h-full bg-rose-500/20 transition-all duration-75"
@@ -199,7 +227,7 @@ export default function ProfileMenu({ user }) {
 
                   {/* The Text */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 group-hover:text-white transition-colors">
+                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-500 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white transition-colors">
                       {isResetting ? <Loader2 size={14} className="animate-spin text-rose-500"/> : "Swipe to reset"}
                     </span>
                   </div>
@@ -229,7 +257,7 @@ export default function ProfileMenu({ user }) {
                 <button
                   onClick={() => { setShowReset(false); setSwipeProgress(0); }}
                   disabled={isResetting}
-                  className="w-full py-2 text-[9px] font-bold text-gray-500 hover:text-white uppercase tracking-widest transition-colors"
+                  className="w-full py-2 text-[9px] font-bold text-gray-500 hover:text-gray-900 dark:hover:text-white uppercase tracking-widest transition-colors"
                 >
                   Cancel
                 </button>

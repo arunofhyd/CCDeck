@@ -265,10 +265,10 @@ function doPost(e) {
   };
 
   return (
-    <div className="min-h-screen bg-[#05070a] flex flex-col items-center justify-center p-4 selection:bg-indigo-500/30 relative overflow-hidden text-white">
-      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_-20%,_#312e81_0%,_transparent_50%)] opacity-40"></div>
+    <div className="min-h-screen bg-gray-50 dark:bg-[#05070a] flex flex-col items-center justify-center p-4 selection:bg-indigo-500/30 relative overflow-hidden text-gray-900 dark:text-white transition-colors duration-300">
+      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_-20%,_#312e81_0%,_transparent_50%)] opacity-20 dark:opacity-40 pointer-events-none"></div>
 
-      <div className="bg-white/5 backdrop-blur-3xl border border-white/10 p-8 md:p-12 rounded-[3rem] w-full max-w-2xl shadow-[0_0_80px_rgba(0,0,0,0.5)] relative z-10 overflow-y-auto max-h-[90vh] custom-scrollbar">
+      <div className="bg-white dark:bg-white/5 backdrop-blur-3xl border border-gray-200 dark:border-white/10 p-8 md:p-12 rounded-[3rem] w-full max-w-2xl shadow-2xl dark:shadow-[0_0_80px_rgba(0,0,0,0.5)] relative z-10 overflow-y-auto max-h-[90vh] custom-scrollbar transition-colors">
         <div className="absolute top-6 right-6">
           <ProfileMenu user={user} />
         </div>
@@ -277,17 +277,17 @@ function doPost(e) {
           <div className="w-16 h-16 bg-gradient-to-tr from-indigo-600 to-blue-400 rounded-2xl flex items-center justify-center shadow-lg mb-6">
             <Settings className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-black text-white tracking-tight leading-none mb-1 uppercase">Database Setup</h1>
-          <p className="text-[9px] font-bold text-indigo-400 tracking-[0.3em] uppercase">Connect Google Sheets</p>
+          <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight leading-none mb-1 uppercase">Database Setup</h1>
+          <p className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 tracking-[0.3em] uppercase">Connect Google Sheets</p>
         </div>
 
         <div className="flex justify-between items-center mb-10 relative">
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-px bg-white/10 -z-10"></div>
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-px bg-gray-200 dark:bg-white/10 -z-10"></div>
           {[1, 2, 3, 4].map((num) => (
             <div key={num} className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-sm border-2 transition-colors ${
               step > num ? 'bg-indigo-600 border-indigo-600 text-white' :
-              step === num ? 'bg-[#0c1017] border-indigo-500 text-indigo-400' :
-              'bg-[#0c1017] border-white/10 text-gray-600'
+              step === num ? 'bg-white dark:bg-[#0c1017] border-indigo-500 text-indigo-500 dark:text-indigo-400' :
+              'bg-white dark:bg-[#0c1017] border-gray-200 dark:border-white/10 text-gray-400 dark:text-gray-600'
             }`}>
               {step > num ? <Check size={16} /> : num}
             </div>
@@ -303,22 +303,22 @@ function doPost(e) {
         {step === 1 && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
-              <h3 className="text-lg font-black uppercase tracking-tighter mb-4 text-indigo-400">1. Create a Google Sheet</h3>
-              <ol className="list-decimal list-inside space-y-3 text-sm text-gray-300 font-medium">
-                <li>Go to <a href="https://sheets.google.com" target="_blank" rel="noreferrer" className="text-indigo-400 hover:underline inline-flex items-center gap-1">Google Sheets <ExternalLink size={12}/></a> and create a new Blank spreadsheet.</li>
-                <li>In the first row, create exactly these 4 column headers: <br/><code className="bg-white/10 px-2 py-1 rounded text-white font-mono text-xs ml-5 mt-2 inline-block">date | merchant | amount | card</code></li>
+              <h3 className="text-lg font-black uppercase tracking-tighter mb-4 text-indigo-600 dark:text-indigo-400">1. Create a Google Sheet</h3>
+              <ol className="list-decimal list-inside space-y-3 text-sm text-gray-600 dark:text-gray-300 font-medium">
+                <li>Go to <a href="https://sheets.google.com" target="_blank" rel="noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1">Google Sheets <ExternalLink size={12}/></a> and create a new Blank spreadsheet.</li>
+                <li>In the first row, create exactly these 4 column headers: <br/><code className="bg-gray-100 dark:bg-white/10 px-2 py-1 rounded text-gray-900 dark:text-white font-mono text-xs ml-5 mt-2 inline-block">date | merchant | amount | card</code></li>
                 <li>Copy the full URL of your new Google Sheet from the address bar.</li>
               </ol>
             </div>
 
             <div className="pt-4">
-              <label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Paste Google Sheet URL</label>
+              <label className="block text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase mb-3 tracking-widest">Paste Google Sheet URL</label>
               <input
                 type="text"
                 placeholder="https://docs.google.com/spreadsheets/d/1A2B3C4D5E6F7G8H9I0J..."
                 value={sheetUrl}
                 onChange={(e) => setSheetUrl(e.target.value)}
-                className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-4 text-white font-black outline-none text-xs placeholder:text-gray-600 focus:border-indigo-500/50 transition-colors"
+                className="w-full bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/5 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-black outline-none text-xs placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:border-indigo-500/50 transition-colors"
               />
             </div>
 
@@ -335,8 +335,8 @@ function doPost(e) {
         {step === 2 && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
-              <h3 className="text-lg font-black uppercase tracking-tighter mb-4 text-indigo-400">2. Add Apps Script Code</h3>
-              <ol className="list-decimal list-inside space-y-3 text-sm text-gray-300 font-medium">
+              <h3 className="text-lg font-black uppercase tracking-tighter mb-4 text-indigo-600 dark:text-indigo-400">2. Add Apps Script Code</h3>
+              <ol className="list-decimal list-inside space-y-3 text-sm text-gray-600 dark:text-gray-300 font-medium">
                 <li>In your Google Sheet, click <strong>Extensions &gt; Apps Script</strong>.</li>
                 <li>Delete any code in the editor and <strong>paste the code below</strong>.</li>
                 <li>Click the Save icon (💾) or press Ctrl+S/Cmd+S.</li>
@@ -347,19 +347,19 @@ function doPost(e) {
               <div className="absolute right-4 top-4 z-20">
                 <button
                   onClick={copyCode}
-                  className="p-2 bg-white/10 hover:bg-white/20 rounded-lg text-white backdrop-blur-md transition-colors flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest"
+                  className="p-2 bg-gray-200 dark:bg-white/10 hover:bg-gray-300 dark:hover:bg-white/20 rounded-lg text-gray-900 dark:text-white backdrop-blur-md transition-colors flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest"
                 >
-                  {copied ? <Check size={14} className="text-emerald-400"/> : <Copy size={14} />}
+                  {copied ? <Check size={14} className="text-emerald-600 dark:text-emerald-400"/> : <Copy size={14} />}
                   {copied ? 'Copied!' : 'Copy Code'}
                 </button>
               </div>
-              <pre className="bg-[#0c1017] border border-white/10 rounded-2xl p-6 text-[10px] sm:text-xs text-gray-300 font-mono overflow-x-auto h-64 relative">
+              <pre className="bg-gray-50 dark:bg-[#0c1017] border border-gray-200 dark:border-white/10 rounded-2xl p-6 text-[10px] sm:text-xs text-gray-800 dark:text-gray-300 font-mono overflow-x-auto h-64 relative">
                 <code>{appScriptCode}</code>
               </pre>
             </div>
 
             <div className="flex gap-4 pt-4">
-              <button onClick={() => setStep(1)} className="flex-1 bg-white/5 hover:bg-white/10 text-white px-7 py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-widest border border-white/10">Back</button>
+              <button onClick={() => setStep(1)} className="flex-1 bg-white dark:bg-white/5 hover:bg-gray-50 dark:hover:bg-white/10 text-gray-900 dark:text-white px-7 py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-widest border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-none">Back</button>
               <button onClick={() => setStep(3)} className="flex-[2] bg-indigo-600 hover:bg-indigo-700 text-white px-7 py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-2 shadow-lg text-xs uppercase tracking-widest">Next Step <ChevronRight size={16} /></button>
             </div>
           </div>
@@ -368,9 +368,9 @@ function doPost(e) {
         {step === 3 && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
-              <h3 className="text-lg font-black uppercase tracking-tighter mb-4 text-indigo-400">3. Enable Auto-Sync</h3>
-              <p className="text-sm text-gray-300 mb-4">Set up a trigger so ccdeck syncs your emails automatically in the background.</p>
-              <ol className="list-decimal list-inside space-y-3 text-sm text-gray-300 font-medium">
+              <h3 className="text-lg font-black uppercase tracking-tighter mb-4 text-indigo-600 dark:text-indigo-400">3. Enable Auto-Sync</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">Set up a trigger so ccdeck syncs your emails automatically in the background.</p>
+              <ol className="list-decimal list-inside space-y-3 text-sm text-gray-600 dark:text-gray-300 font-medium">
                 <li>In Apps Script, click the <strong>Clock icon (Triggers)</strong> on the left sidebar.</li>
                 <li>Click the blue <strong>+ Add Trigger</strong> button at the bottom right.</li>
                 <li>Set "Choose which function to run" to <strong>extractCreditCardTransactions</strong>.</li>
@@ -381,7 +381,7 @@ function doPost(e) {
             </div>
 
             <div className="flex gap-4 pt-4">
-              <button onClick={() => setStep(2)} className="flex-1 bg-white/5 hover:bg-white/10 text-white px-7 py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-widest border border-white/10">Back</button>
+              <button onClick={() => setStep(2)} className="flex-1 bg-white dark:bg-white/5 hover:bg-gray-50 dark:hover:bg-white/10 text-gray-900 dark:text-white px-7 py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-widest border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-none">Back</button>
               <button onClick={() => setStep(4)} className="flex-[2] bg-indigo-600 hover:bg-indigo-700 text-white px-7 py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-2 shadow-lg text-xs uppercase tracking-widest">Next Step <ChevronRight size={16} /></button>
             </div>
           </div>
@@ -390,8 +390,8 @@ function doPost(e) {
         {step === 4 && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
-              <h3 className="text-lg font-black uppercase tracking-tighter mb-4 text-indigo-400">4. Deploy Web App</h3>
-              <ol className="list-decimal list-inside space-y-3 text-sm text-gray-300 font-medium">
+              <h3 className="text-lg font-black uppercase tracking-tighter mb-4 text-indigo-600 dark:text-indigo-400">4. Deploy Web App</h3>
+              <ol className="list-decimal list-inside space-y-3 text-sm text-gray-600 dark:text-gray-300 font-medium">
                 <li>In Apps Script, click the blue <strong>Deploy</strong> button (top right) &gt; <strong>New deployment</strong>.</li>
                 <li>Click the gear icon next to "Select type" and choose <strong>Web app</strong>.</li>
                 <li>Set "Execute as" to <strong>Me</strong>.</li>
@@ -402,18 +402,18 @@ function doPost(e) {
             </div>
 
             <div className="pt-4">
-              <label className="block text-[9px] font-black text-gray-500 uppercase mb-3 tracking-widest">Paste Web App URL</label>
+              <label className="block text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase mb-3 tracking-widest">Paste Web App URL</label>
               <input
                 type="text"
                 placeholder="https://script.google.com/macros/s/AKfycb..."
                 value={webAppUrl}
                 onChange={(e) => setWebAppUrl(e.target.value)}
-                className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-4 text-white font-black outline-none text-xs placeholder:text-gray-600 focus:border-indigo-500/50 transition-colors"
+                className="w-full bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/5 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-black outline-none text-xs placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:border-indigo-500/50 transition-colors"
               />
             </div>
 
             <div className="flex gap-4 pt-4">
-              <button onClick={() => setStep(3)} disabled={isSaving} className="flex-1 bg-white/5 hover:bg-white/10 text-white px-7 py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-widest border border-white/10">Back</button>
+              <button onClick={() => setStep(3)} disabled={isSaving} className="flex-1 bg-white dark:bg-white/5 hover:bg-gray-50 dark:hover:bg-white/10 text-gray-900 dark:text-white px-7 py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-widest border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-none">Back</button>
               <button
                 onClick={handleSaveWebAppUrl}
                 disabled={!webAppUrl || isSaving}
@@ -426,7 +426,6 @@ function doPost(e) {
         )}
 
       </div>
-      <style dangerouslySetInnerHTML={{__html: ".custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; } .custom-scrollbar::-webkit-scrollbar-track { background: transparent; } .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(255,255,255,0.1); border-radius: 10px; }"}} />
     </div>
   );
 }
