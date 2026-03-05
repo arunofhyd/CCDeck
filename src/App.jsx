@@ -184,8 +184,22 @@ export default function App() {
         setPortfolio(userPortfolio);
         setCustomConfig(userConfig);
 
-        // Fetch from AppScript
-        const response = await fetch(appScriptUrl + '?t=' + Date.now(), { cache: 'no-store' });
+        // Fetch from AppScript with a timeout so UI doesn't hang forever
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
+        let response;
+        try {
+          response = await fetch(appScriptUrl + '?t=' + Date.now(), {
+            cache: 'no-store',
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+        } catch (fetchErr) {
+          clearTimeout(timeoutId);
+          throw new Error("Failed to fetch from Google Apps Script. It might be taking too long or the URL is invalid.");
+        }
+
         const data = await response.json();
 
         const currentSpends = {};

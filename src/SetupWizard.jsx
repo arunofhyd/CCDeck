@@ -173,12 +173,8 @@ function parseMerchantName(textData) {
 
 // 1. Sends data TO the dashboard
 function doGet(e) {
-  try {
-    // Attempt a quick background sync whenever dashboard loads
-    extractCreditCardTransactions();
-  } catch(err) {
-    // Ignore to still return data
-  }
+  // We strictly read from the sheet here so the dashboard loads instantly.
+  // The background sync is handled by the Time-driven trigger you set up.
 
   const ss = SpreadsheetApp.openById(DATABASE_SPREADSHEET_ID);
   const txSheet = ss.getSheets()[0];
